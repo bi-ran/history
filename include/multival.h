@@ -50,7 +50,7 @@ class multival {
     }
 
     template <template <typename...> class T, typename U>
-    typename std::enable_if<!std::is_integral<U>::value, int64_t>::type
+    typename std::enable_if<std::is_floating_point<U>::value, int64_t>::type
     index_for(T<U> const& values) const {
         return index_for(indices_for(values)); }
 
