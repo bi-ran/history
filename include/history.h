@@ -226,13 +226,13 @@ class history {
 
     void allocate_histograms();
 
-    template <typename T>
-    int64_t size_of(T const& last) const {
-        return last; }
-
-    template <typename T, typename... U>
-    int64_t size_of(T const& first, U const&... rest) const {
-        return first * size_of(rest...); }
+    template <typename... T>
+    constexpr int64_t size_of(T const&... dimensions) const {
+        int64_t size = 1;
+        for (auto dim : { dimensions... })
+            size = size * dim;
+        return size;
+    }
 
     std::string _tag;
     std::string _ordinate;
