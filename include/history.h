@@ -156,7 +156,24 @@ class history {
     void operator*=(history const& other);
     void operator/=(history const& other);
 
-    void divide(history const& other, int64_t axis);
+    /* divide histograms integrated along axes. */
+    template <template <typename...> class T>
+    void divide(history const& other, T<int64_t> axes) {
+        /* assume self, other have equal shapes after integrating out axes */
+        for (int64_t j = 0; j < other.size(); ++j) {
+            auto count = other[j]->GetBinContent(1);
+            auto scale = count != 0 ? 1. / count : 0;
+            auto indices = other.indices_for(j);
+            for (auto const& axis : axes)
+                indices.insert(std::next(std::begin(indices), axis), 0);
+
+            std::function<void(std::vector<int64_t> const&)> scaler =
+                    [&](std::vector<int64_t> const& indices) {
+                (*this)[indices]->Scale(scale); };
+
+            permute(scaler, indices, _shape, axes);
+        }
+    }
 
     void divide(TH1* const other);
 
@@ -211,6 +228,22 @@ class history {
     std::vector<int64_t> const& shape() const { return _shape; }
 
   private:
+    template <template <typename...> class T, typename U>
+    void permute(std::function<void(T<U> const&)>& lambda,
+                 std::vector<int64_t>& indices,
+                 std::vector<int64_t> const& shape,
+                 std::vector<int64_t> const& axes,
+                 int64_t index = 0) {
+        if (index == static_cast<int64_t>(axes.size())) {
+            lambda(indices); return; }
+
+        int64_t axis = axes[index];
+        for (int64_t i = 0; i < shape[axis]; ++i) {
+            indices[axis] = i;
+            permute(lambda, indices, shape, axes, index + 1);
+        }
+    }
+
     TH1F* sum_impl(std::string const& name, std::vector<int64_t> indices,
                    int64_t axis, int64_t start, int64_t end) const;
 
