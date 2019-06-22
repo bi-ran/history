@@ -163,12 +163,12 @@ class history {
     TH1F*& operator[](int64_t index);
     TH1F* const& operator[](int64_t index) const;
 
-    template <template <typename...> class T>
-    TH1F*& operator[](T<int64_t> const& indices) {
+    template <template <typename...> class T, typename U>
+    TH1F*& operator[](T<U> const& indices) {
         return histograms[index_for(indices)]; }
 
-    template <template <typename...> class T>
-    TH1F* const& operator[](T<int64_t> const& indices) const {
+    template <template <typename...> class T, typename U>
+    TH1F* const& operator[](T<U> const& indices) const {
         return histograms[index_for(indices)]; }
 
     TH1F* sum(std::vector<int64_t> const& indices, int64_t axis) const;
