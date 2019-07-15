@@ -21,17 +21,6 @@ class interval {
     interval(T<float> const& edges)
         : interval(edges, std::string()) { }
 
-    template <typename... T>
-    interval(T const&... edges, std::string const& abscissa)
-        : _size(sizeof...(T) - 1),
-          _edges({static_cast<double>(edges)...}),
-          _abscissa(abscissa) { }
-
-    template <typename... T>
-    interval(T const&... edges)
-        : _size(sizeof...(T) - 1),
-          _edges({static_cast<double>(edges)...}) { }
-
     interval(interval const& other) = default;
     interval& operator=(interval const& other) = default;
     ~interval() = default;
