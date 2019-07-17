@@ -1,5 +1,38 @@
 #include "../include/history.h"
 
+#include "TNamed.h"
+
+history::history(TFile* f, std::string const& tag)
+        : _tag(tag) {
+    using namespace std::literals::string_literals;
+
+    std::string desc = ((TNamed*)f->Get(tag.data()))->GetTitle();
+    while (!desc.empty()) {
+        desc.erase(0, 1);
+
+        auto pos = desc.find("_"s);
+        auto token = desc.substr(0, pos);
+        _shape.push_back(std::atoi(token.data()));
+
+        desc.erase(0, pos);
+    }
+
+    _dims = _shape.size();
+    _size = std::accumulate(std::begin(_shape), std::end(_shape), 1,
+                            std::multiplies<int64_t>());
+
+    histograms = std::vector<TH1F*>(_size, 0);
+    for (int64_t i = 0; i < _size; ++i) {
+        std::string index_string;
+        for (auto const& index : indices_for(i))
+            index_string = index_string + "_"s + std::to_string(index);
+
+        auto name = _tag + index_string;
+        histograms[i] = (TH1F*)f->Get(name.data());
+        histograms[i]->SetName(name.data());
+    }
+}
+
 std::vector<int64_t> history::indices_for(int64_t index) const {
     std::vector<int64_t> indices(_dims);
     for (int64_t i = 0; i < _dims; ++i) {
@@ -89,6 +122,23 @@ TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis,
 
 void history::apply(std::function<void(TH1*)> f) {
     for (auto& hist : histograms) { f(hist); }
+}
+
+void history::save(std::string const& prefix) const {
+    using namespace std::literals::string_literals;
+
+    for (auto const& hist : histograms) {
+        auto name = prefix + "_"s + hist->GetName();
+        hist->Write(name.data(), TObject::kOverwrite);
+    }
+
+    auto shape_desc = ""s;
+    for (auto const& s : _shape)
+        shape_desc += "_"s + std::to_string(s);
+
+    auto title = prefix + "_"s + _tag;
+    auto label = new TNamed(title.data(), shape_desc.data());
+    label->Write("", TObject::kOverwrite);
 }
 
 TH1F* history::sum_impl(std::string const& name, std::vector<int64_t> indices,

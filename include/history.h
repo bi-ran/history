@@ -4,6 +4,7 @@
 #include "interval.h"
 #include "multival.h"
 
+#include "TFile.h"
 #include "TH1.h"
 #include "TObject.h"
 
@@ -114,6 +115,8 @@ class history {
                   dimensions...) {
     }
 
+    history(TFile* f, std::string const& tag);
+
     history(history const&) = delete;
     history& operator=(history const&) = delete;
     ~history() = default;
@@ -222,6 +225,8 @@ class history {
         return forward(index_for(indices), function, args...); }
 
     void apply(std::function<void(TH1*)> f);
+
+    void save(std::string const& prefix) const;
 
     int64_t const& dims() const { return _dims; }
     int64_t const& size() const { return _size; }
