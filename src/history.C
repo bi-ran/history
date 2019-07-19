@@ -75,6 +75,45 @@ void history::operator*=(double c1) { this->scale(c1); }
 void history::operator/=(double c1) { this->scale(1. / c1); }
 
 void history::multiply(history const& other) {
+    if (_shape == other._shape) { return _multiply(other); }
+
+    /* warning: fails silently! */
+    if (_dims <= other._dims) { return; }
+
+    bool match = true;
+    for (int64_t i = 0; i < _dims; ++i)
+        match = match && (_shape[i] == other._shape[i]);
+
+    if (!match) { return; }
+
+    std::vector<int64_t> axes(_dims - other._dims);
+    std::iota(std::begin(axes), std::end(axes), other._dims);
+
+    return multiply(other, axes);
+}
+
+void history::divide(history const& other) {
+    if (_shape == other._shape) { return _divide(other); }
+
+    /* warning: fails silently! */
+    if (_dims <= other._dims) { return; }
+
+    bool match = true;
+    for (int64_t i = 0; i < _dims; ++i)
+        match = match && (_shape[i] == other._shape[i]);
+
+    if (!match) { return; }
+
+    std::vector<int64_t> axes(_dims - other._dims);
+    std::iota(std::begin(axes), std::end(axes), other._dims);
+
+    return divide(other, axes);
+}
+
+void history::operator*=(history const& other) { this->multiply(other); }
+void history::operator/=(history const& other) { this->divide(other); }
+
+void history::_multiply(history const& other) {
     /* assume self, other have equal shapes */
     for (int64_t j = 0; j < _size; ++j) {
         auto count = other[j]->GetBinContent(1);
@@ -82,7 +121,7 @@ void history::multiply(history const& other) {
     }
 }
 
-void history::divide(history const& other) {
+void history::_divide(history const& other) {
     /* assume self, other have equal shapes */
     for (int64_t j = 0; j < _size; ++j) {
         auto count = other[j]->GetBinContent(1);
@@ -90,9 +129,6 @@ void history::divide(history const& other) {
         histograms[j]->Scale(scale);
     }
 }
-
-void history::operator*=(history const& other) { this->multiply(other); }
-void history::operator/=(history const& other) { this->divide(other); }
 
 void history::multiply(TH1* const other) {
     apply([&](TH1* h) { h->Multiply(other); });

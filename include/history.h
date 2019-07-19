@@ -252,6 +252,9 @@ class history {
     std::vector<int64_t> const& shape() const { return _shape; }
 
   private:
+    void _multiply(history const& other);
+    void _divide(history const& other);
+
     template <template <typename...> class T, typename U>
     void permute(std::function<void(T<U> const&)>& lambda,
                  std::vector<int64_t>& indices,
