@@ -94,9 +94,12 @@ void history::divide(history const& other) {
 void history::operator*=(history const& other) { this->multiply(other); }
 void history::operator/=(history const& other) { this->divide(other); }
 
+void history::multiply(TH1* const other) {
+    apply([&](TH1* h) { h->Multiply(other); });
+}
+
 void history::divide(TH1* const other) {
-    for (auto const& hist : histograms)
-        hist->Divide(other);
+    apply([&](TH1* h) { h->Divide(other); });
 }
 
 TH1F*& history::operator[](int64_t index) {

@@ -161,10 +161,26 @@ class history {
     void operator*=(history const& other);
     void operator/=(history const& other);
 
-    /* divide histograms integrated along axes. */
+    /* scale histograms integrated along axes. assume self, other have equal
+     * shapes after integrating out axes */
+    template <template <typename...> class T>
+    void multiply(history const& other, T<int64_t> axes) {
+        for (int64_t j = 0; j < other.size(); ++j) {
+            auto count = other[j]->GetBinContent(1);
+            auto indices = other.indices_for(j);
+            for (auto const& axis : axes)
+                indices.insert(std::next(std::begin(indices), axis), 0);
+
+            std::function<void(std::vector<int64_t> const&)> scaler =
+                    [&](std::vector<int64_t> const& indices) {
+                (*this)[indices]->Scale(count); };
+
+            permute(scaler, indices, _shape, axes);
+        }
+    }
+
     template <template <typename...> class T>
     void divide(history const& other, T<int64_t> axes) {
-        /* assume self, other have equal shapes after integrating out axes */
         for (int64_t j = 0; j < other.size(); ++j) {
             auto count = other[j]->GetBinContent(1);
             auto scale = count != 0 ? 1. / count : 0;
@@ -180,6 +196,7 @@ class history {
         }
     }
 
+    void multiply(TH1* const other);
     void divide(TH1* const other);
 
     TH1F*& operator[](int64_t index);
