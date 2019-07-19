@@ -2,10 +2,10 @@
 
 #include "TNamed.h"
 
+using namespace std::literals::string_literals;
+
 history::history(TFile* f, std::string const& tag)
         : _tag(tag) {
-    using namespace std::literals::string_literals;
-
     std::string desc = ((TNamed*)f->Get(tag.data()))->GetTitle();
     while (!desc.empty()) {
         desc.erase(0, 1);
@@ -30,6 +30,21 @@ history::history(TFile* f, std::string const& tag)
         auto name = _tag + index_string;
         histograms[i] = (TH1F*)f->Get(name.data());
         histograms[i]->SetName(name.data());
+    }
+}
+
+history::history(history const& other, std::string const& prefix) 
+        : _tag(prefix + "_"s + other._tag),
+          _ordinate(other._ordinate),
+          _dims(other._dims),
+          _size(other._size),
+          _shape(other._shape),
+          bins(other.bins),
+          intervals(other.intervals) {
+    for (auto const& hist : other.histograms) {
+        auto name = prefix + "_"s + hist->GetName();
+        histograms.emplace_back((TH1F*)hist->Clone(name.data()));
+        histograms.back()->SetName(name.data());
     }
 }
 
@@ -93,8 +108,6 @@ TH1F* const& history::operator[](int64_t index) const {
 }
 
 TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis) const {
-    using namespace std::literals::string_literals;
-
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
@@ -107,8 +120,6 @@ TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis) const {
 
 TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis,
                    int64_t start, int64_t end) const {
-    using namespace std::literals::string_literals;
-
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
@@ -125,8 +136,6 @@ void history::apply(std::function<void(TH1*)> f) {
 }
 
 void history::save(std::string const& prefix) const {
-    using namespace std::literals::string_literals;
-
     for (auto const& hist : histograms) {
         auto name = prefix + "_"s + hist->GetName();
         hist->Write(name.data(), TObject::kOverwrite);
@@ -154,8 +163,6 @@ TH1F* history::sum_impl(std::string const& name, std::vector<int64_t> indices,
 }
 
 std::unique_ptr<history> history::sum_impl(int64_t axis) const {
-    using namespace std::literals::string_literals;
-
     std::vector<int64_t> output = _shape;
     output.erase(std::next(std::begin(output), axis));
 
@@ -172,8 +179,6 @@ std::unique_ptr<history> history::sum_impl(int64_t axis) const {
 }
 
 void history::allocate_histograms() {
-    using namespace std::literals::string_literals;
-
     histograms = std::vector<TH1F*>(_size, 0);
     for (int64_t i = 0; i < _size; ++i) {
         std::string index_string;

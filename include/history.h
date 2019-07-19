@@ -117,6 +117,8 @@ class history {
 
     history(TFile* f, std::string const& tag);
 
+    history(history const&, std::string const& prefix);
+
     history(history const&) = delete;
     history& operator=(history const&) = delete;
     ~history() = default;
