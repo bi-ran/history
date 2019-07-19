@@ -21,7 +21,7 @@ history::history(TFile* f, std::string const& tag)
     _size = std::accumulate(std::begin(_shape), std::end(_shape), 1,
                             std::multiplies<int64_t>());
 
-    histograms = std::vector<TH1F*>(_size, 0);
+    histograms = std::vector<TH1F*>(_size, nullptr);
     for (int64_t i = 0; i < _size; ++i) {
         std::string index_string;
         for (auto const& index : indices_for(i))
@@ -218,7 +218,7 @@ std::unique_ptr<history> history::sum_impl(int64_t axis) const {
 }
 
 void history::allocate_histograms() {
-    histograms = std::vector<TH1F*>(_size, 0);
+    histograms = std::vector<TH1F*>(_size, nullptr);
     for (int64_t i = 0; i < _size; ++i) {
         std::string index_string;
         for (auto const& index : indices_for(i))
