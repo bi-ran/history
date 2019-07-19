@@ -206,7 +206,7 @@ std::unique_ptr<history> history::sum_impl(int64_t axis) const {
     output.erase(std::next(std::begin(output), axis));
 
     auto result = std::make_unique<history>(
-        _tag + "_sum"s + std::to_string(axis), _ordinate, bins, output);
+        _tag + "_sum"s + std::to_string(axis), _ordinate, output);
 
     for (int64_t i = 0; i < result->size(); ++i) {
         auto indices = result->indices_for(i);

@@ -24,6 +24,17 @@ using v = std::initializer_list<double>;
 class history {
   public:
     history(std::string const& tag, std::string const& ordinate,
+            std::vector<int64_t> const& shape)
+        : _tag(tag),
+          _ordinate(ordinate),
+          _dims(shape.size()),
+          _size(std::accumulate(std::begin(shape), std::end(shape), 1,
+                                std::multiplies<int64_t>())),
+          _shape(shape),
+          histograms(std::vector<TH1F*>(_size, nullptr)) {
+    }
+
+    history(std::string const& tag, std::string const& ordinate,
             std::shared_ptr<interval> const& bins,
             std::shared_ptr<multival> const& intervals)
             : _tag(tag),
