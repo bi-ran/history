@@ -255,6 +255,7 @@ class history {
         return forward(index_for(indices), function, args...); }
 
     void apply(std::function<void(TH1*)> f);
+    void apply(std::function<void(TH1*, int64_t)> f);
 
     void save(std::string const& prefix) const;
 

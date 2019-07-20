@@ -174,6 +174,10 @@ void history::apply(std::function<void(TH1*)> f) {
     for (auto& hist : histograms) { f(hist); }
 }
 
+void history::apply(std::function<void(TH1*, int64_t)> f) {
+    for (int64_t i = 0; i < _size; ++i) { f(histograms[i], i); }
+}
+
 void history::save(std::string const& prefix) const {
     for (auto const& hist : histograms) {
         auto name = prefix + "_"s + hist->GetName();
