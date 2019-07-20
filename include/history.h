@@ -106,7 +106,7 @@ class history {
             std::string const& abscissa,
             T<float> const& edges,
             std::shared_ptr<multival> const& intervals)
-        : history(tag, ordinate, std::make_shared<interval>(edges, abscissa),
+        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
                   intervals) {
     }
 
@@ -114,7 +114,7 @@ class history {
     history(std::string const& tag, std::string const& ordinate,
             std::string const& abscissa, T<float> const& edges,
             U<int64_t> const& shape)
-        : history(tag, ordinate, std::make_shared<interval>(edges, abscissa),
+        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
                   shape) {
     }
 
@@ -122,7 +122,7 @@ class history {
     history(std::string const& tag, std::string const& ordinate,
             std::string const& abscissa, T<float> const& edges,
             U const&... dimensions)
-        : history(tag, ordinate, std::make_shared<interval>(edges, abscissa),
+        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
                   dimensions...) {
     }
 

@@ -6,11 +6,11 @@
 #include <iterator>
 #include <numeric>
 
-interval::interval(int64_t number, double min, double max,
-                   std::string const& abscissa)
-        : _size(number),
-          _edges(std::vector<double>(number + 1)),
-          _abscissa(abscissa) {
+interval::interval(std::string const& abscissa, int64_t number,
+                   double min, double max)
+        : _abscissa(abscissa),
+          _size(number),
+          _edges(std::vector<double>(number + 1)) {
     std::iota(std::begin(_edges), std::end(_edges), 0);
     double interval = (max - min) / number;
     for (auto& edge : _edges)
@@ -18,7 +18,7 @@ interval::interval(int64_t number, double min, double max,
 }
 
 interval::interval(int64_t number, double min, double max)
-        : interval(number, min, max, std::string()) { }
+        : interval(std::string(), number, min, max) { }
 
 int64_t interval::index_for(double value) const {
     int64_t index = _size;
