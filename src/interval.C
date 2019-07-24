@@ -29,6 +29,10 @@ int64_t interval::index_for(double value) const {
     return index;
 }
 
+std::array<double, 2> interval::edges(int64_t index) const {
+    return { _edges[index], _edges[index + 1] };
+}
+
 template <typename T>
 T* interval::book(std::string const& name, std::string const& title) {
     return new T(name.data(), title.data(), _size, _edges.data());

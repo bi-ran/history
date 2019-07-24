@@ -1,6 +1,7 @@
 #ifndef INTERVAL_H
 #define INTERVAL_H
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -27,6 +28,7 @@ class interval {
 
     int64_t index_for(double value) const;
 
+    std::array<double, 2> edges(int64_t index) const;
     double operator[](int64_t index) const { return _edges[index]; }
 
     std::string const& abscissa() const { return _abscissa; }
