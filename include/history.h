@@ -68,7 +68,7 @@ class history {
               _dims(sizeof...(T)),
               _size(size_of(dimensions...)),
               bins(bins) {
-        auto shape = std::array<int64_t, sizeof...(T)>(dimensions...);
+        auto shape = std::array<int64_t, sizeof...(T)>({dimensions...});
         _shape = std::vector<int64_t>(std::begin(shape), std::end(shape));
 
         allocate_histograms();
