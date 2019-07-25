@@ -33,6 +33,11 @@ history::history(TFile* f, std::string const& tag)
     }
 }
 
+history::history(TFile* f, std::string const& tag, std::string const& prefix)
+        : history(f, tag) {
+    prepend(prefix);
+}
+
 history::history(history const& other, std::string const& prefix) 
         : _tag(prefix + "_"s + other._tag),
           _ordinate(other._ordinate),
@@ -191,6 +196,15 @@ void history::save(std::string const& prefix) const {
     auto title = prefix + "_"s + _tag;
     auto label = new TNamed(title.data(), shape_desc.data());
     label->Write("", TObject::kOverwrite);
+}
+
+void history::prepend(std::string const& prefix) {
+    _tag = prefix + "_"s + _tag;
+
+    for (auto const& hist : histograms) {
+        auto name = prefix + "_"s + hist->GetName();
+        hist->SetName(name.data());
+    }
 }
 
 TH1F* history::sum_impl(std::string const& name, std::vector<int64_t> indices,

@@ -127,6 +127,7 @@ class history {
     }
 
     history(TFile* f, std::string const& tag);
+    history(TFile* f, std::string const& tag, std::string const& prefix);
 
     history(history const&, std::string const& prefix);
 
@@ -258,6 +259,8 @@ class history {
     void apply(std::function<void(TH1*, int64_t)> f);
 
     void save(std::string const& prefix) const;
+
+    void prepend(std::string const& prefix);
 
     int64_t const& dims() const { return _dims; }
     int64_t const& size() const { return _size; }
