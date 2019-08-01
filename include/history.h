@@ -234,6 +234,10 @@ class history {
     std::unique_ptr<history> sum(int64_t axis, T... axes) const {
         return sum_impl(axis)->sum(axes...); }
 
+    std::unique_ptr<history> shrink(std::string const& tag,
+                                    std::vector<int64_t> const& shape,
+                                    std::vector<int64_t> const& offset) const;
+
     template <typename T, typename... U>
     T operator()(int64_t index, T (TH1::* function)(U...), U... args) {
         return forward(index, function, args...); }

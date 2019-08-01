@@ -235,6 +235,38 @@ std::unique_ptr<history> history::sum_impl(int64_t axis) const {
     return result;
 }
 
+std::unique_ptr<history> history::shrink(std::string const& tag,
+        std::vector<int64_t> const& shape,
+        std::vector<int64_t> const& offset) const {
+    auto result = std::make_unique<history>(*this, tag);
+
+    auto pos = std::begin(result->histograms);
+    for (int64_t i = 0; i < _size; ++i, ++pos) {
+        auto const& indices = indices_for(i);
+        for (int64_t j = 0; j < _dims; ++j) {
+            if (indices[j] < offset[j] || indices[j] >= shape[j] + offset[j]) {
+                pos = result->histograms.erase(pos);
+                --pos;
+                break;
+            }
+        }
+    }
+
+    result->_shape = shape;
+    result->_size = std::accumulate(std::begin(shape), std::end(shape), 1,
+                                    std::multiplies<int64_t>());
+
+    for (int64_t i = 0; i < result->_size; ++i) {
+        std::string index_string;
+        for (auto const& index : result->indices_for(i))
+            index_string = index_string + "_"s + std::to_string(index);
+
+        result->histograms[i]->SetName((result->_tag + index_string).data());
+    }
+
+    return result;
+}
+
 void history::allocate_histograms() {
     histograms = std::vector<TH1F*>(_size, nullptr);
     for (int64_t i = 0; i < _size; ++i) {
