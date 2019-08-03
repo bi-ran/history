@@ -2,7 +2,6 @@
 #define HISTORY_H
 
 #include "interval.h"
-#include "multival.h"
 
 #include "TFile.h"
 #include "TH1.h"
@@ -34,19 +33,6 @@ class history {
           histograms(std::vector<TH1F*>(_size, nullptr)) {
     }
 
-    history(std::string const& tag, std::string const& ordinate,
-            std::shared_ptr<interval> const& bins,
-            std::shared_ptr<multival> const& intervals)
-            : _tag(tag),
-              _ordinate(ordinate),
-              _dims(intervals->dims()),
-              _size(intervals->size()),
-              _shape(intervals->shape()),
-              bins(bins),
-              intervals(intervals) {
-        allocate_histograms();
-    }
-
     template <template <typename...> class T>
     history(std::string const& tag, std::string const& ordinate,
             std::shared_ptr<interval> const& bins, T<int64_t> const& shape)
@@ -74,15 +60,6 @@ class history {
         allocate_histograms();
     }
 
-    template <template <typename...> class T>
-    history(std::string const& tag,
-            std::string const& ordinate,
-            T<float> const& edges,
-            std::shared_ptr<multival> const& intervals)
-        : history(tag, ordinate, std::make_shared<interval>(edges),
-                  intervals) {
-    }
-
     template <template <typename...> class T, template <typename...> class U>
     history(std::string const& tag,
             std::string const& ordinate,
@@ -98,16 +75,6 @@ class history {
             U const&... dimensions)
         : history(tag, ordinate, std::make_shared<interval>(edges),
                   dimensions...) {
-    }
-
-    template <template <typename...> class T>
-    history(std::string const& tag,
-            std::string const& ordinate,
-            std::string const& abscissa,
-            T<float> const& edges,
-            std::shared_ptr<multival> const& intervals)
-        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
-                  intervals) {
     }
 
     template <template <typename...> class T, template <typename...> class U>
@@ -149,11 +116,6 @@ class history {
 
         return index;
     }
-
-    template <template <typename...> class T, typename U>
-    typename std::enable_if<std::is_floating_point<U>::value, int64_t>::type
-    index_for(T<U> const& values) const {
-        return intervals->index_for(values); }
 
     std::vector<int64_t> indices_for(int64_t index) const;
 
@@ -270,7 +232,7 @@ class history {
     int64_t const& size() const { return _size; }
     std::vector<int64_t> const& shape() const { return _shape; }
 
-  private:
+  protected:
     void _multiply(history const& other);
     void _divide(history const& other);
 
@@ -321,7 +283,6 @@ class history {
     std::vector<int64_t> _shape;
 
     std::shared_ptr<interval> bins;
-    std::shared_ptr<multival> intervals;
     std::vector<TH1F*> histograms;
 };
 

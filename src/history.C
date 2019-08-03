@@ -44,8 +44,7 @@ history::history(history const& other, std::string const& prefix)
           _dims(other._dims),
           _size(other._size),
           _shape(other._shape),
-          bins(other.bins),
-          intervals(other.intervals) {
+          bins(other.bins) {
     for (auto const& hist : other.histograms) {
         auto name = prefix + "_"s + hist->GetName();
         histograms.emplace_back((TH1F*)hist->Clone(name.data()));
