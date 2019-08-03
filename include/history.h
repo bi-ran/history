@@ -131,6 +131,8 @@ class history {
     void operator*=(double c1);
     void operator/=(double c1);
 
+    /* scale histograms by counts from other. assume self, other have identical
+     * shapes for overlapping dimensions */
     void multiply(history const& other);
     void divide(history const& other);
 
@@ -141,39 +143,21 @@ class history {
      * shapes after integrating out axes */
     template <template <typename...> class T>
     void multiply(history const& other, T<int64_t> axes) {
-        for (int64_t j = 0; j < other.size(); ++j) {
-            auto count = other[j]->GetBinContent(1);
-            auto indices = other.indices_for(j);
-            for (auto const& axis : axes)
-                indices.insert(std::next(std::begin(indices), axis), 0);
-
-            std::function<void(std::vector<int64_t> const&)> scaler =
-                    [&](std::vector<int64_t> const& indices) {
-                (*this)[indices]->Scale(count); };
-
-            permute(scaler, indices, _shape, axes);
-        }
+        scale(other, axes, [](float content) -> float {
+            return content; });
     }
 
     template <template <typename...> class T>
     void divide(history const& other, T<int64_t> axes) {
-        for (int64_t j = 0; j < other.size(); ++j) {
-            auto count = other[j]->GetBinContent(1);
-            auto scale = count != 0 ? 1. / count : 0;
-            auto indices = other.indices_for(j);
-            for (auto const& axis : axes)
-                indices.insert(std::next(std::begin(indices), axis), 0);
-
-            std::function<void(std::vector<int64_t> const&)> scaler =
-                    [&](std::vector<int64_t> const& indices) {
-                (*this)[indices]->Scale(scale); };
-
-            permute(scaler, indices, _shape, axes);
-        }
+        scale(other, axes, [](float content) -> float {
+            return content != 0 ? 1. / content : 0; });
     }
 
     void multiply(TH1* const other);
     void divide(TH1* const other);
+
+    void operator*=(TH1* const other);
+    void operator/=(TH1* const other);
 
     TH1F*& operator[](int64_t index);
     TH1F* const& operator[](int64_t index) const;
@@ -235,15 +219,14 @@ class history {
     std::vector<int64_t> const& shape() const { return _shape; }
 
   protected:
-    void _multiply(history const& other);
-    void _divide(history const& other);
+    bool compatible(history const& other) const;
 
     template <template <typename...> class T, typename U>
     void permute(std::function<void(T<U> const&)>& lambda,
                  std::vector<int64_t>& indices,
                  std::vector<int64_t> const& shape,
                  std::vector<int64_t> const& axes,
-                 int64_t index = 0) {
+                 int64_t index) {
         if (index == static_cast<int64_t>(axes.size())) {
             lambda(indices); return; }
 
@@ -251,6 +234,23 @@ class history {
         for (int64_t i = 0; i < shape[axis]; ++i) {
             indices[axis] = i;
             permute(lambda, indices, shape, axes, index + 1);
+        }
+    }
+
+    template <template <typename...> class T>
+    void scale(history const& other, T<int64_t> axes,
+               std::function<float(float)> lambda) {
+        for (int64_t j = 0; j < other.size(); ++j) {
+            auto indices = other.indices_for(j);
+            for (auto const& axis : axes)
+                indices.insert(std::next(std::begin(indices), axis), 0);
+
+            auto scale = lambda(other[j]->GetBinContent(1));
+            std::function<void(std::vector<int64_t> const&)> scaler =
+                    [&](std::vector<int64_t> const& indices) {
+                (*this)[indices]->Scale(scale); };
+
+            permute(scaler, indices, _shape, axes, 0);
         }
     }
 

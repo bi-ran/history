@@ -67,28 +67,20 @@ void history::add(history const& other, double c1) {
         histograms[i]->Add(other[i], c1);
 }
 
-void history::operator+=(history const& other) { this->add(other, 1); }
-void history::operator-=(history const& other) { this->add(other, -1); }
+void history::operator+=(history const& other) { add(other, 1); }
+void history::operator-=(history const& other) { add(other, -1); }
 
 void history::scale(double c1) {
     for (auto const& hist : histograms)
         hist->Scale(c1);
 }
 
-void history::operator*=(double c1) { this->scale(c1); }
-void history::operator/=(double c1) { this->scale(1. / c1); }
+void history::operator*=(double c1) { scale(c1); }
+void history::operator/=(double c1) { scale(1. / c1); }
 
 void history::multiply(history const& other) {
-    if (_shape == other._shape) { return _multiply(other); }
-
     /* warning: fails silently! */
-    if (_dims <= other._dims) { return; }
-
-    bool match = true;
-    for (int64_t i = 0; i < _dims; ++i)
-        match = match && (_shape[i] == other._shape[i]);
-
-    if (!match) { return; }
+    if (!compatible(other)) { return; }
 
     std::vector<int64_t> axes(_dims - other._dims);
     std::iota(std::begin(axes), std::end(axes), other._dims);
@@ -97,16 +89,8 @@ void history::multiply(history const& other) {
 }
 
 void history::divide(history const& other) {
-    if (_shape == other._shape) { return _divide(other); }
-
     /* warning: fails silently! */
-    if (_dims <= other._dims) { return; }
-
-    bool match = true;
-    for (int64_t i = 0; i < _dims; ++i)
-        match = match && (_shape[i] == other._shape[i]);
-
-    if (!match) { return; }
+    if (!compatible(other)) { return; }
 
     std::vector<int64_t> axes(_dims - other._dims);
     std::iota(std::begin(axes), std::end(axes), other._dims);
@@ -114,25 +98,8 @@ void history::divide(history const& other) {
     return divide(other, axes);
 }
 
-void history::operator*=(history const& other) { this->multiply(other); }
-void history::operator/=(history const& other) { this->divide(other); }
-
-void history::_multiply(history const& other) {
-    /* assume self, other have equal shapes */
-    for (int64_t j = 0; j < _size; ++j) {
-        auto count = other[j]->GetBinContent(1);
-        histograms[j]->Scale(count);
-    }
-}
-
-void history::_divide(history const& other) {
-    /* assume self, other have equal shapes */
-    for (int64_t j = 0; j < _size; ++j) {
-        auto count = other[j]->GetBinContent(1);
-        auto scale = count != 0 ? 1. / count : 0;
-        histograms[j]->Scale(scale);
-    }
-}
+void history::operator*=(history const& other) { multiply(other); }
+void history::operator/=(history const& other) { divide(other); }
 
 void history::multiply(TH1* const other) {
     apply([&](TH1* h) { h->Multiply(other); });
@@ -141,6 +108,9 @@ void history::multiply(TH1* const other) {
 void history::divide(TH1* const other) {
     apply([&](TH1* h) { h->Divide(other); });
 }
+
+void history::operator*=(TH1* const other) { multiply(other); }
+void history::operator/=(TH1* const other) { divide(other); }
 
 TH1F*& history::operator[](int64_t index) {
     return histograms[index];
@@ -204,6 +174,16 @@ void history::prepend(std::string const& prefix) {
         auto name = prefix + "_"s + hist->GetName();
         hist->SetName(name.data());
     }
+}
+
+bool history::compatible(history const& other) const {
+    if (_dims < other._dims) { return false; }
+
+    std::vector<int64_t> common = _shape;
+    common.resize(other._dims);
+    if (common != other._shape) { return false; }
+
+    return true;
 }
 
 TH1F* history::sum_impl(std::string const& name, std::vector<int64_t> indices,
