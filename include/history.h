@@ -100,6 +100,8 @@ class history {
 
     history(history const&) = delete;
     history& operator=(history const&) = delete;
+    history(history&&) = default;
+    history& operator=(history&&) = default;
     ~history() = default;
 
     template <template <typename...> class T, typename U>

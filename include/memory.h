@@ -35,6 +35,11 @@ class memory : public history {
           intervals(intervals) {
     }
 
+    memory(history&&, std::shared_ptr<multival> const& intervals);
+
+    memory(memory&&) = delete;
+    memory& operator=(memory&&) = delete;
+
     using history::index_for;
 
     template <template <typename...> class T, typename U>
