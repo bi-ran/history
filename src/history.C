@@ -124,11 +124,11 @@ TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis) const {
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
-    std::string full_tag = _tag + "_sum"s + std::to_string(axis);
+    std::string name = _tag + "_sum"s + std::to_string(axis);
     for (auto const& index : output)
-        full_tag = full_tag + "_"s + std::to_string(index);
+        name = name + "_"s + std::to_string(index);
 
-    return sum_impl(full_tag, indices, axis, 0, _shape[axis]);
+    return sum_impl(name, indices, axis, 0, _shape[axis]);
 }
 
 TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis,
@@ -136,12 +136,12 @@ TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis,
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
-    std::string full_tag = _tag + "_sum"s + std::to_string(axis)
+    std::string name = _tag + "_sum"s + std::to_string(axis)
         + "f"s + std::to_string(start) + "t"s + std::to_string(end);
     for (auto const& index : output)
-        full_tag = full_tag + "_"s + std::to_string(index);
+        name = name + "_"s + std::to_string(index);
 
-    return sum_impl(full_tag, indices, axis, start, end);
+    return sum_impl(name, indices, axis, start, end);
 }
 
 void history::apply(std::function<void(TH1*)> f) {

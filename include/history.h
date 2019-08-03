@@ -187,25 +187,23 @@ class history {
                                     std::vector<int64_t> const& offset) const;
 
     template <typename T, typename... U>
-    T operator()(int64_t index, T (TH1::* function)(U...), U... args) {
-        return forward(index, function, args...); }
+    T operator()(int64_t index, T (TH1::* fn)(U...), U... args) {
+        return forward(index, fn, args...); }
 
     template <typename T, typename... U>
-    T operator()(int64_t index, T (TH1::* function)(U...) const,
-                 U... args) const {
-        return forward(index, function, args...); }
+    T operator()(int64_t index, T (TH1::* fn)(U...) const, U... args) const {
+        return forward(index, fn, args...); }
 
     template <typename T, template <typename...> class U, typename V,
               typename... W>
-    T operator()(U<V> const& indices, T (TH1::* function)(W...),
-                 W... args) {
-        return forward(index_for(indices), function, args...); }
+    T operator()(U<V> const& indices, T (TH1::* fn)(W...), W... args) {
+        return forward(index_for(indices), fn, args...); }
 
     template <typename T, template <typename...> class U, typename V,
               typename... W>
-    T operator()(U<V> const& indices, T (TH1::* function)(W...) const,
-                 W... args) {
-        return forward(index_for(indices), function, args...); }
+    T operator()(U<V> const& indices, T (TH1::* fn)(W...) const,
+                 W... args) const {
+        return forward(index_for(indices), fn, args...); }
 
     void apply(std::function<void(TH1*)> f);
     void apply(std::function<void(TH1*, int64_t)> f);

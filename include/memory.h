@@ -61,15 +61,14 @@ class memory : public history {
 
     template <typename T, template <typename...> class U, typename V,
               typename... W>
-    T operator()(U<V> const& indices, T (TH1::* function)(W...),
-                 W... args) {
-        return forward(index_for(indices), function, args...); }
+    T operator()(U<V> const& indices, T (TH1::* fn)(W...), W... args) {
+        return forward(index_for(indices), fn, args...); }
 
     template <typename T, template <typename...> class U, typename V,
               typename... W>
-    T operator()(U<V> const& indices, T (TH1::* function)(W...) const,
-                 W... args) {
-        return forward(index_for(indices), function, args...); }
+    T operator()(U<V> const& indices, T (TH1::* fn)(W...) const,
+                 W... args) const {
+        return forward(index_for(indices), fn, args...); }
 
     memory(memory const&, std::string const& prefix);
 
