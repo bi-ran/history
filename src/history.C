@@ -111,22 +111,20 @@ TH1F* const& history::operator[](int64_t index) const {
     return histograms[index];
 }
 
-TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis) const {
+TH1F* history::sum(std::vector<int64_t> indices, int64_t axis) const {
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
     auto name = _tag + "_sum"s + std::to_string(axis) + stub(output);
-    return sum_impl(name, indices, axis, 0, _shape[axis]);
-}
+    auto sum = static_cast<TH1F*>((*this)[indices]->Clone(name.data()));
 
-TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis,
-                   int64_t start, int64_t end) const {
-    std::vector<int64_t> output = indices;
-    output.erase(std::next(std::begin(output), axis));
+    sum->Reset("MICES");
+    for (int64_t i = 0; i < _shape[axis]; ++i) {
+        indices[axis] = i;
+        sum->Add((*this)[indices]);
+    }
 
-    auto name = _tag + "_sum"s + std::to_string(axis) + "f"s
-        + std::to_string(start) + "t"s + std::to_string(end) + stub(output);
-    return sum_impl(name, indices, axis, start, end);
+    return sum;
 }
 
 void history::apply(std::function<void(TH1*)> f) {
@@ -185,19 +183,7 @@ std::string history::stub(std::vector<int64_t> const& indices) const {
     return std::accumulate(std::begin(indices), std::end(indices), ""s, add);
 }
 
-TH1F* history::sum_impl(std::string const& name, std::vector<int64_t> indices,
-                        int64_t axis, int64_t start, int64_t end) const {
-    auto sum = static_cast<TH1F*>((*this)[indices]->Clone(name.data()));
-    sum->Reset("MICES");
-    for (int64_t i = start; i < end; ++i) {
-        indices[axis] = i;
-        sum->Add((*this)[indices]);
-    }
-
-    return sum;
-}
-
-std::unique_ptr<history> history::sum_impl(int64_t axis) const {
+std::unique_ptr<history> history::_sum(int64_t axis) const {
     std::vector<int64_t> output = _shape;
     output.erase(std::next(std::begin(output), axis));
 

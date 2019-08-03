@@ -175,17 +175,14 @@ class history {
     TH1F* const& operator[](T<U> const& indices) const {
         return histograms[index_for(indices)]; }
 
-    TH1F* sum(std::vector<int64_t> const& indices, int64_t axis) const;
-
-    TH1F* sum(std::vector<int64_t> const& indices, int64_t axis,
-              int64_t start, int64_t end) const;
+    TH1F* sum(std::vector<int64_t> indices, int64_t axis) const;
 
     std::unique_ptr<history> sum(int64_t axis) const {
-        return sum_impl(axis); }
+        return _sum(axis); }
 
     template <typename... T>
     std::unique_ptr<history> sum(int64_t axis, T... axes) const {
-        return sum_impl(axis)->sum(axes...); }
+        return _sum(axis)->sum(axes...); }
 
     std::unique_ptr<history> shrink(std::string const& tag,
                                     std::vector<int64_t> const& shape,
@@ -260,10 +257,7 @@ class history {
 
     std::string stub(std::vector<int64_t> const& indices) const;
 
-    TH1F* sum_impl(std::string const& name, std::vector<int64_t> indices,
-                   int64_t axis, int64_t start, int64_t end) const;
-
-    std::unique_ptr<history> sum_impl(int64_t axis) const;
+    std::unique_ptr<history> _sum(int64_t axis) const;
 
     template <typename T, typename U, typename... V>
     T forward(int64_t index, T (U::* function)(V...), V... args) {
@@ -277,10 +271,9 @@ class history {
 
     template <typename... T>
     constexpr int64_t size_of(T const&... dimensions) const {
-        int64_t size = 1;
-        for (auto dim : { dimensions... })
-            size = size * dim;
-        return size;
+        auto dims = { dimensions... };
+        return std::accumulate(std::begin(dims), std::end(dims), 1,
+                               std::multiplies<int64_t>());
     }
 
     std::string _tag;
