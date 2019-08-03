@@ -94,7 +94,12 @@ class history {
     }
 
     history(TFile* f, std::string const& tag);
-    history(TFile* f, std::string const& tag, std::string const& prefix);
+
+    template <typename... T>
+    history(TFile* f, std::string const& tag, T const&... args)
+            : history(f, tag) {
+        rename(args...);
+    }
 
     history(history const&, std::string const& prefix);
 
@@ -210,7 +215,8 @@ class history {
 
     void save(std::string const& prefix) const;
 
-    void prepend(std::string const& prefix);
+    void rename(std::string const& prefix);
+    void rename(std::string const& replace, std::string const& prefix);
 
     int64_t const& dims() const { return _dims; }
     int64_t const& size() const { return _size; }
@@ -251,6 +257,8 @@ class history {
             permute(scaler, indices, _shape, axes, 0);
         }
     }
+
+    std::string stub(std::vector<int64_t> const& indices) const;
 
     TH1F* sum_impl(std::string const& name, std::vector<int64_t> indices,
                    int64_t axis, int64_t start, int64_t end) const;

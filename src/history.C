@@ -23,19 +23,10 @@ history::history(TFile* f, std::string const& tag)
 
     histograms = std::vector<TH1F*>(_size, nullptr);
     for (int64_t i = 0; i < _size; ++i) {
-        std::string index_string;
-        for (auto const& index : indices_for(i))
-            index_string = index_string + "_"s + std::to_string(index);
-
-        auto name = _tag + index_string;
+        auto name = _tag + stub(indices_for(i));
         histograms[i] = (TH1F*)f->Get(name.data());
         histograms[i]->SetName(name.data());
     }
-}
-
-history::history(TFile* f, std::string const& tag, std::string const& prefix)
-        : history(f, tag) {
-    prepend(prefix);
 }
 
 history::history(history const& other, std::string const& prefix) 
@@ -124,10 +115,7 @@ TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis) const {
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
-    std::string name = _tag + "_sum"s + std::to_string(axis);
-    for (auto const& index : output)
-        name = name + "_"s + std::to_string(index);
-
+    auto name = _tag + "_sum"s + std::to_string(axis) + stub(output);
     return sum_impl(name, indices, axis, 0, _shape[axis]);
 }
 
@@ -136,11 +124,8 @@ TH1F* history::sum(std::vector<int64_t> const& indices, int64_t axis,
     std::vector<int64_t> output = indices;
     output.erase(std::next(std::begin(output), axis));
 
-    std::string name = _tag + "_sum"s + std::to_string(axis)
-        + "f"s + std::to_string(start) + "t"s + std::to_string(end);
-    for (auto const& index : output)
-        name = name + "_"s + std::to_string(index);
-
+    auto name = _tag + "_sum"s + std::to_string(axis) + "f"s
+        + std::to_string(start) + "t"s + std::to_string(end) + stub(output);
     return sum_impl(name, indices, axis, start, end);
 }
 
@@ -167,11 +152,18 @@ void history::save(std::string const& prefix) const {
     label->Write("", TObject::kOverwrite);
 }
 
-void history::prepend(std::string const& prefix) {
-    _tag = prefix + "_"s + _tag;
+void history::rename(std::string const& prefix) {
+    rename("", prefix);
+}
 
+void history::rename(std::string const& replace, std::string const& prefix) {
+    auto original = _tag;
+
+    _tag = prefix + "_"s + (replace.empty() ? _tag : replace);
     for (auto const& hist : histograms) {
-        auto name = prefix + "_"s + hist->GetName();
+        std::string name = hist->GetName();
+        auto pos = name.find(original);
+        name.replace(pos, original.length(), _tag);
         hist->SetName(name.data());
     }
 }
@@ -184,6 +176,13 @@ bool history::compatible(history const& other) const {
     if (common != other._shape) { return false; }
 
     return true;
+}
+
+std::string history::stub(std::vector<int64_t> const& indices) const {
+    auto add = [](std::string base, int64_t index) {
+        return std::move(base) + "_"s + std::to_string(index); };
+
+    return std::accumulate(std::begin(indices), std::end(indices), ""s, add);
 }
 
 TH1F* history::sum_impl(std::string const& name, std::vector<int64_t> indices,
@@ -235,13 +234,8 @@ std::unique_ptr<history> history::shrink(std::string const& tag,
     result->_size = std::accumulate(std::begin(shape), std::end(shape), 1,
                                     std::multiplies<int64_t>());
 
-    for (int64_t i = 0; i < result->_size; ++i) {
-        std::string index_string;
-        for (auto const& index : result->indices_for(i))
-            index_string = index_string + "_"s + std::to_string(index);
-
-        result->histograms[i]->SetName((result->_tag + index_string).data());
-    }
+    result->apply([&](TH1* h, int64_t i) {
+        h->SetName((result->_tag + stub(result->indices_for(i))).data()); });
 
     return result;
 }
@@ -249,11 +243,7 @@ std::unique_ptr<history> history::shrink(std::string const& tag,
 void history::allocate_histograms() {
     histograms = std::vector<TH1F*>(_size, nullptr);
     for (int64_t i = 0; i < _size; ++i) {
-        std::string index_string;
-        for (auto const& index : indices_for(i))
-            index_string = index_string + "_"s + std::to_string(index);
-
-        histograms[i] = bins->book<TH1F>(_tag + index_string,
+        histograms[i] = bins->book<TH1F>(_tag + stub(indices_for(i)),
             ";"s + bins->abscissa() + ";"s + _ordinate);
     }
 }
