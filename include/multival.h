@@ -27,11 +27,11 @@ class multival {
     template <template <typename...> class T>
     std::vector<int64_t> indices_for(T<double> const& values) const {
         std::vector<int64_t> indices;
-        auto v = std::begin(values);
-        for (auto const& dim : _intervals) {
-            indices.push_back(dim.index_for(*v));
-            std::advance(v, 1);
-        }
+        auto append = [&](interval const& dim, double val) -> int32_t {
+            indices.push_back(dim.index_for(val)); return 0; };
+
+        std::inner_product(std::begin(_intervals), std::end(_intervals),
+                           std::begin(values), 0, std::plus<>(), append);
 
         return indices;
     }
@@ -39,16 +39,12 @@ class multival {
     template <template <typename...> class T, typename U>
     typename std::enable_if<std::is_integral<U>::value, int64_t>::type
     index_for(T<U> const& indices) const {
-        int64_t index = 0;
         int64_t block = 1;
-        auto x = std::begin(indices);
-        for (auto const& axis : _shape) {
-            index = index + (*x) * block;
-            block = block * axis;
-            std::advance(x, 1);
-        }
+        auto size = [&](int64_t x, int64_t axis) -> int64_t {
+            auto index = block * x; block = block * axis; return index; };
 
-        return index;
+        return std::inner_product(std::begin(indices), std::end(indices),
+                                  std::begin(_shape), 0, std::plus<>(), size);
     }
 
     template <template <typename...> class T, typename U>
