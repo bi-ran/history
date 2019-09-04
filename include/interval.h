@@ -35,7 +35,7 @@ class interval {
     int64_t const& size() const { return _size; }
 
     template <typename T>
-    T* book(std::string const& name, std::string const& title);
+    T* book(std::string const& name, std::string const& title) const;
 
   private:
     std::string const _abscissa;

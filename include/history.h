@@ -10,7 +10,6 @@
 #include <array>
 #include <functional>
 #include <iterator>
-#include <memory>
 #include <numeric>
 #include <string>
 #include <type_traits>
@@ -35,7 +34,7 @@ class history {
 
     template <template <typename...> class T>
     history(std::string const& tag, std::string const& ordinate,
-            std::shared_ptr<interval> const& bins, T<int64_t> const& shape)
+            interval const* bins, T<int64_t> const& shape)
             : _tag(tag),
               _ordinate(ordinate),
               _dims(shape.size()),
@@ -48,7 +47,7 @@ class history {
 
     template <typename... T>
     history(std::string const& tag, std::string const& ordinate,
-            std::shared_ptr<interval> const& bins, T const&... dimensions)
+            interval const* bins, T const&... dimensions)
             : _tag(tag),
               _ordinate(ordinate),
               _dims(sizeof...(T)),
@@ -65,7 +64,7 @@ class history {
             std::string const& ordinate,
             T<float> const& edges,
             U<int64_t> const& shape)
-        : history(tag, ordinate, std::make_shared<interval>(edges), shape) {
+        : history(tag, ordinate, new interval(edges), shape) {
     }
 
     template <template <typename...> class T, typename... U>
@@ -73,24 +72,21 @@ class history {
             std::string const& ordinate,
             T<float> const& edges,
             U const&... dimensions)
-        : history(tag, ordinate, std::make_shared<interval>(edges),
-                  dimensions...) {
+        : history(tag, ordinate, new interval(edges), dimensions...) {
     }
 
     template <template <typename...> class T, template <typename...> class U>
     history(std::string const& tag, std::string const& ordinate,
             std::string const& abscissa, T<float> const& edges,
             U<int64_t> const& shape)
-        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
-                  shape) {
+        : history(tag, ordinate, new interval(abscissa, edges), shape) {
     }
 
     template <template <typename...> class T, typename... U>
     history(std::string const& tag, std::string const& ordinate,
             std::string const& abscissa, T<float> const& edges,
             U const&... dimensions)
-        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
-                  dimensions...) {
+        : history(tag, ordinate, new interval(abscissa, edges), dimensions...) {
     }
 
     history(TFile* f, std::string const& tag);
@@ -177,14 +173,14 @@ class history {
 
     TH1F* sum(std::vector<int64_t> indices, int64_t axis) const;
 
-    std::unique_ptr<history> sum(int64_t axis) const {
+    history* sum(int64_t axis) const {
         return _sum(axis); }
 
     template <typename... T>
-    std::unique_ptr<history> sum(int64_t axis, T... axes) const {
+    history* sum(int64_t axis, T... axes) const {
         return _sum(axis)->sum(axes...); }
 
-    std::unique_ptr<history> shrink(std::string const& tag,
+    history* shrink(std::string const& tag,
                                     std::vector<int64_t> const& shape,
                                     std::vector<int64_t> const& offset) const;
 
@@ -257,7 +253,7 @@ class history {
 
     std::string stub(std::vector<int64_t> const& indices) const;
 
-    std::unique_ptr<history> _sum(int64_t axis) const;
+    history* _sum(int64_t axis) const;
 
     template <typename T, typename U, typename... V>
     T forward(int64_t index, T (U::* function)(V...), V... args) {
@@ -283,7 +279,7 @@ class history {
     int64_t _size;
     std::vector<int64_t> _shape;
 
-    std::shared_ptr<interval> bins;
+    interval const* bins;
     std::vector<TH1F*> histograms;
 };
 

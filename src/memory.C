@@ -5,7 +5,7 @@ memory::memory(memory const& other, std::string const& prefix)
       intervals(other.intervals) {
 }
 
-memory::memory(history&& other, std::shared_ptr<multival> const& intervals)
+memory::memory(history&& other, multival const* intervals)
     : history(std::move(other)),
       intervals(intervals) {
 }

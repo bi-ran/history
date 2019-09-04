@@ -8,8 +8,7 @@
 class memory : public history {
   public:
     memory(std::string const& tag, std::string const& ordinate,
-           std::shared_ptr<interval> const& bins,
-           std::shared_ptr<multival> const& intervals)
+           interval const* bins, multival const* intervals)
         : history(tag, ordinate, bins, intervals->shape()),
           intervals(intervals) {
     }
@@ -18,9 +17,8 @@ class memory : public history {
     memory(std::string const& tag,
            std::string const& ordinate,
            T<float> const& edges,
-           std::shared_ptr<multival> const& intervals)
-        : history(tag, ordinate, std::make_shared<interval>(edges),
-                  intervals->shape()),
+           multival const* intervals)
+        : history(tag, ordinate, new interval(edges), intervals->shape()),
           intervals(intervals) {
     }
 
@@ -29,13 +27,13 @@ class memory : public history {
            std::string const& ordinate,
            std::string const& abscissa,
            T<float> const& edges,
-           std::shared_ptr<multival> const& intervals)
-        : history(tag, ordinate, std::make_shared<interval>(abscissa, edges),
+           multival const* intervals)
+        : history(tag, ordinate, new interval(abscissa, edges),
                   intervals->shape()),
           intervals(intervals) {
     }
 
-    memory(history&&, std::shared_ptr<multival> const& intervals);
+    memory(history&&, multival const* intervals);
 
     memory(memory&&) = delete;
     memory& operator=(memory&&) = delete;
@@ -77,7 +75,7 @@ class memory : public history {
     ~memory() = default;
 
   private:
-    std::shared_ptr<multival> intervals;
+    multival const* intervals;
 };
 
 #endif /* MEMORY_H */

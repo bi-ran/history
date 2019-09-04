@@ -34,10 +34,12 @@ std::array<double, 2> interval::edges(int64_t index) const {
 }
 
 template <typename T>
-T* interval::book(std::string const& name, std::string const& title) {
+T* interval::book(std::string const& name, std::string const& title) const {
     return new T(name.data(), title.data(), _size, _edges.data());
 }
 
 /* explicit instantiations */
-template TH1F* interval::book<TH1F>(std::string const&, std::string const&);
-template TH1D* interval::book<TH1D>(std::string const&, std::string const&);
+template TH1F*
+interval::book<TH1F>(std::string const&, std::string const&) const;
+template TH1D*
+interval::book<TH1D>(std::string const&, std::string const&) const;

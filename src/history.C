@@ -183,12 +183,12 @@ std::string history::stub(std::vector<int64_t> const& indices) const {
     return std::accumulate(std::begin(indices), std::end(indices), ""s, add);
 }
 
-std::unique_ptr<history> history::_sum(int64_t axis) const {
+history* history::_sum(int64_t axis) const {
     std::vector<int64_t> output = _shape;
     output.erase(std::next(std::begin(output), axis));
 
-    auto result = std::make_unique<history>(
-        _tag + "_sum"s + std::to_string(axis), _ordinate, output);
+    auto result = new history(_tag + "_sum"s + std::to_string(axis),
+                              _ordinate, output);
 
     for (int64_t i = 0; i < result->size(); ++i) {
         auto indices = result->indices_for(i);
@@ -199,10 +199,10 @@ std::unique_ptr<history> history::_sum(int64_t axis) const {
     return result;
 }
 
-std::unique_ptr<history> history::shrink(std::string const& tag,
+history* history::shrink(std::string const& tag,
         std::vector<int64_t> const& shape,
         std::vector<int64_t> const& offset) const {
-    auto result = std::make_unique<history>(*this, tag);
+    auto result = new history(*this, tag);
 
     auto pos = std::begin(result->histograms);
     for (int64_t i = 0; i < _size; ++i, ++pos) {
