@@ -1,7 +1,7 @@
 #include "../include/interval.h"
 
 #include "TH1F.h"
-#include "TH1D.h"
+#include "TH2F.h"
 
 #include <iterator>
 #include <numeric>
@@ -33,13 +33,23 @@ std::array<double, 2> interval::edges(int64_t index) const {
     return { _edges[index], _edges[index + 1] };
 }
 
-template <typename T>
-T* interval::book(std::string const& name, std::string const& title) const {
-    return new T(name.data(), title.data(), _size, _edges.data());
+/* template specialisations */
+
+template <>
+TH1F* interval::book<TH1F>(std::string const& name,
+                           std::string const& title) const {
+    return new TH1F(name.data(), title.data(), _size, _edges.data());
+}
+
+template <>
+TH2F* interval::book<TH2F>(std::string const& name,
+                           std::string const& title) const {
+    return new TH2F(name.data(), title.data(), _size, _edges.data(),
+                    _size, _edges.data());
 }
 
 /* explicit instantiations */
 template TH1F*
 interval::book<TH1F>(std::string const&, std::string const&) const;
-template TH1D*
-interval::book<TH1D>(std::string const&, std::string const&) const;
+template TH2F*
+interval::book<TH2F>(std::string const&, std::string const&) const;
