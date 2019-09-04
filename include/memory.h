@@ -2,14 +2,14 @@
 #define MEMORY_H
 
 #include "history.h"
-
 #include "multival.h"
 
-class memory : public history {
+template <typename H>
+class memory : public history<H> {
   public:
     memory(std::string const& tag, std::string const& ordinate,
            interval const* bins, multival const* intervals)
-        : history(tag, ordinate, bins, intervals->shape()),
+        : history<H>(tag, ordinate, bins, intervals->shape()),
           intervals(intervals) {
     }
 
@@ -18,7 +18,7 @@ class memory : public history {
            std::string const& ordinate,
            T<float> const& edges,
            multival const* intervals)
-        : history(tag, ordinate, new interval(edges), intervals->shape()),
+        : history<H>(tag, ordinate, new interval(edges), intervals->shape()),
           intervals(intervals) {
     }
 
@@ -28,51 +28,56 @@ class memory : public history {
            std::string const& abscissa,
            T<float> const& edges,
            multival const* intervals)
-        : history(tag, ordinate, new interval(abscissa, edges),
+        : history<H>(tag, ordinate, new interval(abscissa, edges),
                   intervals->shape()),
           intervals(intervals) {
     }
 
-    memory(history&&, multival const* intervals);
+    memory(memory const& other, std::string const& prefix)
+        : history<H>(other, prefix),
+          intervals(other.intervals) {
+    }
 
+    memory(history<H>&& other, multival const* intervals)
+        : history<H>(std::move(other)),
+          intervals(intervals) {
+    }
+
+    memory(memory const&) = delete;
+    memory& operator=(memory const&) = delete;
     memory(memory&&) = delete;
     memory& operator=(memory&&) = delete;
+    ~memory() = default;
 
-    using history::index_for;
+    using history<H>::index_for;
 
     template <template <typename...> class T, typename U>
     typename std::enable_if<std::is_floating_point<U>::value, int64_t>::type
     index_for(T<U> const& values) const {
         return intervals->index_for(values); }
 
-    using history::operator[];
+    using history<H>::operator[];
 
     template <template <typename...> class T, typename U>
-    TH1F*& operator[](T<U> const& indices) {
-        return histograms[index_for(indices)]; }
+    H*& operator[](T<U> const& indices) {
+        return this->histograms[index_for(indices)]; }
 
     template <template <typename...> class T, typename U>
-    TH1F* const& operator[](T<U> const& indices) const {
-        return histograms[index_for(indices)]; }
+    H* const& operator[](T<U> const& indices) const {
+        return this->histograms[index_for(indices)]; }
 
-    using history::operator();
+    using history<H>::operator();
 
     template <typename T, template <typename...> class U, typename V,
               typename... W>
-    T operator()(U<V> const& indices, T (TH1::* fn)(W...), W... args) {
+    T operator()(U<V> const& indices, T (H::* fn)(W...), W... args) {
         return forward(index_for(indices), fn, args...); }
 
     template <typename T, template <typename...> class U, typename V,
               typename... W>
-    T operator()(U<V> const& indices, T (TH1::* fn)(W...) const,
+    T operator()(U<V> const& indices, T (H::* fn)(W...) const,
                  W... args) const {
         return forward(index_for(indices), fn, args...); }
-
-    memory(memory const&, std::string const& prefix);
-
-    memory(memory const&) = delete;
-    memory& operator=(memory const&) = delete;
-    ~memory() = default;
 
   private:
     multival const* intervals;
