@@ -18,6 +18,11 @@ class multival {
                                 1, std::multiplies<int64_t>());
     }
 
+    template <typename... T>
+    multival(std::string const& abscissa, T const&... args)
+        : multival(interval(abscissa, args...)) {
+    }
+
     multival(multival const& other) = default;
     multival& operator=(multival const& other) = default;
     ~multival() = default;
@@ -27,8 +32,8 @@ class multival {
     template <template <typename...> class T>
     std::vector<int64_t> indices_for(T<double> const& values) const {
         std::vector<int64_t> indices;
-        auto append = [&](interval const& dim, double val) -> int32_t {
-            indices.push_back(dim.index_for(val)); return 0; };
+        auto append = [&](interval const& axis, double val) -> int32_t {
+            indices.push_back(axis.index_for(val)); return 0; };
 
         std::inner_product(std::begin(_intervals), std::end(_intervals),
                            std::begin(values), 0, std::plus<>(), append);
@@ -52,15 +57,18 @@ class multival {
     index_for(T<U> const& values) const {
         return index_for(indices_for(values)); }
 
+    template <typename T>
+    T* book(std::string const& name, std::string const& title) const;
+
     std::vector<int64_t> const& shape() const { return _shape; }
-    int64_t const& dims() const { return _dims; }
-    int64_t const& size() const { return _size; }
+    int64_t dims() const { return _dims; }
+    int64_t size() const { return _size; }
 
   private:
     template <typename... T>
     void extract(T const&... args) {
         (void) (int [sizeof...(T)]) { (_intervals.emplace_back(args), 0)... };
-        for (auto const& dim : _intervals) { _shape.push_back(dim.size()); }
+        for (auto const& axis : _intervals) { _shape.push_back(axis.size()); }
     }
 
     std::vector<int64_t> _shape;

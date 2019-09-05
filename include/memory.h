@@ -8,17 +8,8 @@ template <typename H>
 class memory : public history<H> {
   public:
     memory(std::string const& tag, std::string const& ordinate,
-           interval const* bins, multival const* intervals)
+           multival const* bins, multival const* intervals)
         : history<H>(tag, ordinate, bins, intervals->shape()),
-          intervals(intervals) {
-    }
-
-    template <template <typename...> class T>
-    memory(std::string const& tag,
-           std::string const& ordinate,
-           T<float> const& edges,
-           multival const* intervals)
-        : history<H>(tag, ordinate, new interval(edges), intervals->shape()),
           intervals(intervals) {
     }
 
@@ -28,8 +19,8 @@ class memory : public history<H> {
            std::string const& abscissa,
            T<float> const& edges,
            multival const* intervals)
-        : history<H>(tag, ordinate, new interval(abscissa, edges),
-                  intervals->shape()),
+        : history<H>(tag, ordinate, new multival(abscissa, edges),
+                     intervals->shape()),
           intervals(intervals) {
     }
 

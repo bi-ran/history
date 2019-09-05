@@ -1,7 +1,7 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include "interval.h"
+#include "multival.h"
 
 #include "TFile.h"
 #include "TH1.h"
@@ -36,7 +36,7 @@ class history {
 
     template <template <typename...> class T>
     history(std::string const& tag, std::string const& ordinate,
-            interval const* bins, T<int64_t> const& shape)
+            multival const* bins, T<int64_t> const& shape)
             : _tag(tag),
               _ordinate(ordinate),
               _dims(shape.size()),
@@ -49,7 +49,7 @@ class history {
 
     template <typename... T>
     history(std::string const& tag, std::string const& ordinate,
-            interval const* bins, T const&... dimensions)
+            multival const* bins, T const&... dimensions)
             : _tag(tag),
               _ordinate(ordinate),
               _dims(sizeof...(T)),
@@ -62,33 +62,17 @@ class history {
     }
 
     template <template <typename...> class T, template <typename...> class U>
-    history(std::string const& tag,
-            std::string const& ordinate,
-            T<float> const& edges,
-            U<int64_t> const& shape)
-        : history(tag, ordinate, new interval(edges), shape) {
-    }
-
-    template <template <typename...> class T, typename... U>
-    history(std::string const& tag,
-            std::string const& ordinate,
-            T<float> const& edges,
-            U const&... dimensions)
-        : history(tag, ordinate, new interval(edges), dimensions...) {
-    }
-
-    template <template <typename...> class T, template <typename...> class U>
     history(std::string const& tag, std::string const& ordinate,
             std::string const& abscissa, T<float> const& edges,
             U<int64_t> const& shape)
-        : history(tag, ordinate, new interval(abscissa, edges), shape) {
+        : history(tag, ordinate, new multival(abscissa, edges), shape) {
     }
 
     template <template <typename...> class T, typename... U>
     history(std::string const& tag, std::string const& ordinate,
             std::string const& abscissa, T<float> const& edges,
             U const&... dimensions)
-        : history(tag, ordinate, new interval(abscissa, edges), dimensions...) {
+        : history(tag, ordinate, new multival(abscissa, edges), dimensions...) {
     }
 
     history(TFile* f, std::string const& tag)
@@ -451,7 +435,7 @@ class history {
     int64_t _size;
     std::vector<int64_t> _shape;
 
-    interval const* bins;
+    multival const* bins;
     std::vector<H*> histograms;
 };
 
