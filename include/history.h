@@ -96,7 +96,7 @@ class history {
 
         histograms = std::vector<H*>(_size, nullptr);
         for (int64_t i = 0; i < _size; ++i) {
-            auto name = _tag + stub(indices_for(i));
+            auto name = _tag + stub(i);
             histograms[i] = (H*)f->Get(name.data());
             histograms[i]->SetName(name.data());
         }
@@ -267,8 +267,7 @@ class history {
                                         std::multiplies<int64_t>());
 
         result->apply([&](auto h, int64_t i) {
-            h->SetName((result->_tag + stub(result->indices_for(i))).data());
-        });
+            h->SetName((result->_tag + result->stub(i)).data()); });
 
         return result;
     }
@@ -387,6 +386,10 @@ class history {
                                ""s, add);
     }
 
+    std::string stub(int64_t index) const {
+        return stub(indices_for(index));
+    }
+
     history* _sum(int64_t axis) const {
         std::vector<int64_t> output = _shape;
         output.erase(std::next(std::begin(output), axis));
@@ -415,10 +418,8 @@ class history {
         using namespace std::literals::string_literals;
 
         histograms = std::vector<H*>(_size, nullptr);
-        for (int64_t i = 0; i < _size; ++i) {
-            histograms[i] = bins->book<H>(_tag + stub(indices_for(i)),
-                ";"s + bins->abscissa() + ";"s + _ordinate);
-        }
+        for (int64_t i = 0; i < _size; ++i)
+            histograms[i] = bins->book<H>(_tag + stub(i), _ordinate);
     }
 
     template <typename... T>
