@@ -1,11 +1,7 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include "multival.h"
-
-#include "TClass.h"
 #include "TFile.h"
-#include "TH1.h"
 #include "TNamed.h"
 #include "TObject.h"
 
@@ -24,10 +20,10 @@ using v = std::initializer_list<double>;
 template <typename H>
 class history {
   public:
-    history(std::string const& tag, std::string const& ordinate,
+    history(std::string const& tag, std::string const& label,
             std::vector<int64_t> const& shape)
         : _tag(tag),
-          _ordinate(ordinate),
+          _label(label),
           _dims(shape.size()),
           _size(std::accumulate(std::begin(shape), std::end(shape), 1,
                                 std::multiplies<int64_t>())),
@@ -36,44 +32,30 @@ class history {
     }
 
     template <template <typename...> class T>
-    history(std::string const& tag, std::string const& ordinate,
-            multival const* bins, T<int64_t> const& shape)
+    history(std::string const& tag, std::string const& label,
+            auto factory, T<int64_t> const& shape)
             : _tag(tag),
-              _ordinate(ordinate),
+              _label(label),
               _dims(shape.size()),
               _size(std::accumulate(std::begin(shape), std::end(shape), 1,
                                     std::multiplies<int64_t>())),
               _shape(std::vector<int64_t>(std::begin(shape), std::end(shape))),
-              bins(bins) {
+              _factory(factory) {
         allocate_objects();
     }
 
     template <typename... T>
-    history(std::string const& tag, std::string const& ordinate,
-            multival const* bins, T const&... dimensions)
+    history(std::string const& tag, std::string const& label,
+            auto factory, T const&... dimensions)
             : _tag(tag),
-              _ordinate(ordinate),
+              _label(label),
               _dims(sizeof...(T)),
               _size(size_of(dimensions...)),
-              bins(bins) {
+              _factory(factory) {
         auto shape = std::array<int64_t, sizeof...(T)>({dimensions...});
         _shape = std::vector<int64_t>(std::begin(shape), std::end(shape));
 
         allocate_objects();
-    }
-
-    template <template <typename...> class T, template <typename...> class U>
-    history(std::string const& tag, std::string const& ordinate,
-            std::string const& abscissa, T<float> const& edges,
-            U<int64_t> const& shape)
-        : history(tag, ordinate, new multival(abscissa, edges), shape) {
-    }
-
-    template <template <typename...> class T, typename... U>
-    history(std::string const& tag, std::string const& ordinate,
-            std::string const& abscissa, T<float> const& edges,
-            U const&... dimensions)
-        : history(tag, ordinate, new multival(abscissa, edges), dimensions...) {
     }
 
     history(TFile* f, std::string const& tag)
@@ -111,11 +93,11 @@ class history {
 
     history(history const& other, std::string const& prefix)
             : _tag(prefix + "_" + other._tag),
-              _ordinate(other._ordinate),
+              _label(other._label),
               _dims(other._dims),
               _size(other._size),
               _shape(other._shape),
-              bins(other.bins) {
+              _factory(other._factory) {
         using namespace std::literals::string_literals;
 
         for (auto const& obj : other.objects) {
@@ -243,7 +225,7 @@ class history {
         output.erase(std::next(std::begin(output), axis));
 
         auto result = new history(_tag + "_sum" + std::to_string(axis),
-                                  _ordinate, output);
+                                  _label, output);
 
         for (int64_t i = 0; i < result->size(); ++i) {
             auto indices = result->indices_for(i);
@@ -423,9 +405,8 @@ class history {
         using namespace std::literals::string_literals;
 
         objects = std::vector<H*>(_size, nullptr);
-        if (H::Class()->InheritsFrom(TH1::Class()))
-            for (int64_t i = 0; i < _size; ++i)
-                objects[i] = bins->book<H>(_tag + stub(i), _ordinate);
+        for (int64_t i = 0; i < _size; ++i)
+            objects[i] = _factory(_tag + stub(i), _label);
     }
 
     template <typename... T>
@@ -436,13 +417,13 @@ class history {
     }
 
     std::string _tag;
-    std::string _ordinate;
+    std::string _label;
 
     int64_t _dims;
     int64_t _size;
     std::vector<int64_t> _shape;
 
-    multival const* bins;
+    std::function<H*(std::string const&, std::string const&)> _factory;
     std::vector<H*> objects;
 };
 

@@ -7,20 +7,9 @@
 template <typename H>
 class memory : public history<H> {
   public:
-    memory(std::string const& tag, std::string const& ordinate,
-           multival const* bins, multival const* intervals)
-        : history<H>(tag, ordinate, bins, intervals->shape()),
-          intervals(intervals) {
-    }
-
-    template <template <typename...> class T>
-    memory(std::string const& tag,
-           std::string const& ordinate,
-           std::string const& abscissa,
-           T<float> const& edges,
-           multival const* intervals)
-        : history<H>(tag, ordinate, new multival(abscissa, edges),
-                     intervals->shape()),
+    memory(std::string const& tag, std::string const& label,
+           auto factory, multival const* intervals)
+        : history<H>(tag, label, factory, intervals->shape()),
           intervals(intervals) {
     }
 
