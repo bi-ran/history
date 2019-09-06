@@ -238,29 +238,49 @@ class history {
     }
 
     history* sum(int64_t axis) const {
-        return _sum(axis); }
+        std::vector<int64_t> output = _shape;
+        output.erase(std::next(std::begin(output), axis));
+
+        auto result = new history(_tag + "_sum" + std::to_string(axis),
+                                  _ordinate, output);
+
+        for (int64_t i = 0; i < result->size(); ++i) {
+            auto indices = result->indices_for(i);
+            indices.insert(std::next(std::begin(indices), axis), 0);
+            (*result)[i] = this->sum(indices, axis);
+        }
+
+        return result;
+    }
 
     template <typename... T>
     history* sum(int64_t axis, T... axes) const {
-        return _sum(axis)->sum(axes...); }
+        return sum(axis)->sum(axes...); }
 
     history* shrink(std::string const& tag,
                     std::vector<int64_t> const& shape,
                     std::vector<int64_t> const& offset) const {
         auto result = new history(*this, tag);
 
-        auto pos = std::begin(result->histograms);
-        for (int64_t i = 0; i < _size; ++i, ++pos) {
-            auto const& indices = indices_for(i);
+        std::vector<int64_t> out;
+        std::function<void(std::vector<int64_t> const&)> recorder =
+                [&](std::vector<int64_t> const& indices) {
             for (int64_t j = 0; j < _dims; ++j) {
-                if (indices[j] < offset[j]
-                        || indices[j] >= shape[j] + offset[j]) {
-                    pos = result->histograms.erase(pos);
-                    --pos;
-                    break;
-                }
+                if (indices[j] >= shape[j] + offset[j]
+                        || indices[j] < offset[j])
+                    out.push_back(index_for(indices));
             }
-        }
+        };
+
+        std::vector<int64_t> zero(_dims, 0);
+        std::vector<int64_t> axes(_dims);
+        std::iota(std::begin(axes), std::end(axes), 0);
+
+        permute(recorder, zero, _shape, axes, 0);
+
+        auto ref = std::begin(result->histograms);
+        for (auto it = std::rbegin(out); it != std::rend(out); ++it)
+            result->histograms.erase(std::next(ref, *it));
 
         result->_shape = shape;
         result->_size = std::accumulate(std::begin(shape), std::end(shape), 1,
@@ -348,7 +368,7 @@ class history {
                  std::vector<int64_t>& indices,
                  std::vector<int64_t> const& shape,
                  std::vector<int64_t> const& axes,
-                 int64_t index) {
+                 int64_t index) const {
         if (index == static_cast<int64_t>(axes.size())) {
             lambda(indices); return; }
 
@@ -388,22 +408,6 @@ class history {
 
     std::string stub(int64_t index) const {
         return stub(indices_for(index));
-    }
-
-    history* _sum(int64_t axis) const {
-        std::vector<int64_t> output = _shape;
-        output.erase(std::next(std::begin(output), axis));
-
-        auto result = new history(_tag + "_sum" + std::to_string(axis),
-                                  _ordinate, output);
-
-        for (int64_t i = 0; i < result->size(); ++i) {
-            auto indices = result->indices_for(i);
-            indices.insert(std::next(std::begin(indices), axis), 0);
-            (*result)[i] = this->sum(indices, axis);
-        }
-
-        return result;
     }
 
     template <typename T, typename... U>
