@@ -51,11 +51,11 @@ class memory : public history<H> {
 
     template <template <typename...> class T, typename U>
     H*& operator[](T<U> const& indices) {
-        return this->histograms[index_for(indices)]; }
+        return this->objects[index_for(indices)]; }
 
     template <template <typename...> class T, typename U>
     H* const& operator[](T<U> const& indices) const {
-        return this->histograms[index_for(indices)]; }
+        return this->objects[index_for(indices)]; }
 
     using history<H>::operator();
 

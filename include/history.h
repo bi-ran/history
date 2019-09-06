@@ -3,6 +3,7 @@
 
 #include "multival.h"
 
+#include "TClass.h"
 #include "TFile.h"
 #include "TH1.h"
 #include "TNamed.h"
@@ -31,7 +32,7 @@ class history {
           _size(std::accumulate(std::begin(shape), std::end(shape), 1,
                                 std::multiplies<int64_t>())),
           _shape(shape),
-          histograms(std::vector<H*>(_size, nullptr)) {
+          objects(std::vector<H*>(_size, nullptr)) {
     }
 
     template <template <typename...> class T>
@@ -44,7 +45,7 @@ class history {
                                     std::multiplies<int64_t>())),
               _shape(std::vector<int64_t>(std::begin(shape), std::end(shape))),
               bins(bins) {
-        allocate_histograms();
+        allocate_objects();
     }
 
     template <typename... T>
@@ -58,7 +59,7 @@ class history {
         auto shape = std::array<int64_t, sizeof...(T)>({dimensions...});
         _shape = std::vector<int64_t>(std::begin(shape), std::end(shape));
 
-        allocate_histograms();
+        allocate_objects();
     }
 
     template <template <typename...> class T, template <typename...> class U>
@@ -94,11 +95,11 @@ class history {
         _size = std::accumulate(std::begin(_shape), std::end(_shape), 1,
                                 std::multiplies<int64_t>());
 
-        histograms = std::vector<H*>(_size, nullptr);
+        objects = std::vector<H*>(_size, nullptr);
         for (int64_t i = 0; i < _size; ++i) {
             auto name = _tag + stub(i);
-            histograms[i] = (H*)f->Get(name.data());
-            histograms[i]->SetName(name.data());
+            objects[i] = (H*)f->Get(name.data());
+            objects[i]->SetName(name.data());
         }
     }
 
@@ -117,10 +118,10 @@ class history {
               bins(other.bins) {
         using namespace std::literals::string_literals;
 
-        for (auto const& hist : other.histograms) {
-            auto name = prefix + "_" + hist->GetName();
-            histograms.emplace_back((H*)hist->Clone(name.data()));
-            histograms.back()->SetName(name.data());
+        for (auto const& obj : other.objects) {
+            auto name = prefix + "_" + obj->GetName();
+            objects.emplace_back((H*)obj->Clone(name.data()));
+            objects.back()->SetName(name.data());
         }
     }
 
@@ -157,15 +158,15 @@ class history {
 
     void add(history const& other, double c1) {
         for (int64_t i = 0; i < _size; ++i)
-            histograms[i]->Add(other[i], c1);
+            objects[i]->Add(other[i], c1);
     }
 
     void operator+=(history const& other) { add(other, 1); }
     void operator-=(history const& other) { add(other, -1); }
 
     void scale(double c1) {
-        for (auto const& hist : histograms)
-            hist->Scale(c1);
+        for (auto const& obj : objects)
+            obj->Scale(c1);
     }
 
     void operator*=(double c1) { scale(c1); }
@@ -210,16 +211,16 @@ class history {
             return content != 0 ? 1. / content : 0; });
     }
 
-    H*& operator[](int64_t index) { return histograms[index]; }
-    H* const& operator[](int64_t index) const { return histograms[index]; }
+    H*& operator[](int64_t index) { return objects[index]; }
+    H* const& operator[](int64_t index) const { return objects[index]; }
 
     template <template <typename...> class T, typename U>
     H*& operator[](T<U> const& indices) {
-        return histograms[index_for(indices)]; }
+        return objects[index_for(indices)]; }
 
     template <template <typename...> class T, typename U>
     H* const& operator[](T<U> const& indices) const {
-        return histograms[index_for(indices)]; }
+        return objects[index_for(indices)]; }
 
     H* sum(std::vector<int64_t> indices, int64_t axis) const {
         std::vector<int64_t> output = indices;
@@ -278,9 +279,9 @@ class history {
 
         permute(recorder, zero, _shape, axes, 0);
 
-        auto ref = std::begin(result->histograms);
+        auto ref = std::begin(result->objects);
         for (auto it = std::rbegin(out); it != std::rend(out); ++it)
-            result->histograms.erase(std::next(ref, *it));
+            result->objects.erase(std::next(ref, *it));
 
         result->_shape = shape;
         result->_size = std::accumulate(std::begin(shape), std::end(shape), 1,
@@ -312,17 +313,17 @@ class history {
         return forward(index_for(indices), fn, args...); }
 
     void apply(std::function<void(H*)> f) {
-        for (auto& hist : histograms) { f(hist); } }
+        for (auto& obj : objects) { f(obj); } }
 
     void apply(std::function<void(H*, int64_t)> f) {
-        for (int64_t i = 0; i < _size; ++i) { f(histograms[i], i); } }
+        for (int64_t i = 0; i < _size; ++i) { f(objects[i], i); } }
 
     void save(std::string const& prefix) const {
         using namespace std::literals::string_literals;
 
-        for (auto const& hist : histograms) {
-            auto name = prefix + "_"s + hist->GetName();
-            hist->Write(name.data(), TObject::kOverwrite);
+        for (auto const& obj : objects) {
+            auto name = prefix + "_"s + obj->GetName();
+            obj->Write(name.data(), TObject::kOverwrite);
         }
 
         auto shape_desc = ""s;
@@ -338,11 +339,11 @@ class history {
         auto original = _tag;
 
         _tag = prefix + "_" + (replace.empty() ? _tag : replace);
-        for (auto const& hist : histograms) {
-            std::string name = hist->GetName();
+        for (auto const& obj : objects) {
+            std::string name = obj->GetName();
             auto pos = name.find(original);
             name.replace(pos, original.length(), _tag);
-            hist->SetName(name.data());
+            obj->SetName(name.data());
         }
     }
 
@@ -412,18 +413,19 @@ class history {
 
     template <typename T, typename... U>
     T forward(int64_t index, T (H::* function)(U...), U... args) {
-        return ((*histograms[index]).*function)(std::forward<U>(args)...); }
+        return ((*objects[index]).*function)(std::forward<U>(args)...); }
 
     template <typename T, typename... U>
     T forward(int64_t index, T (H::* function)(U...) const, U... args) const {
-        return ((*histograms[index]).*function)(std::forward<U>(args)...); }
+        return ((*objects[index]).*function)(std::forward<U>(args)...); }
 
-    void allocate_histograms() {
+    void allocate_objects() {
         using namespace std::literals::string_literals;
 
-        histograms = std::vector<H*>(_size, nullptr);
-        for (int64_t i = 0; i < _size; ++i)
-            histograms[i] = bins->book<H>(_tag + stub(i), _ordinate);
+        objects = std::vector<H*>(_size, nullptr);
+        if (H::Class()->InheritsFrom(TH1::Class()))
+            for (int64_t i = 0; i < _size; ++i)
+                objects[i] = bins->book<H>(_tag + stub(i), _ordinate);
     }
 
     template <typename... T>
@@ -441,7 +443,7 @@ class history {
     std::vector<int64_t> _shape;
 
     multival const* bins;
-    std::vector<H*> histograms;
+    std::vector<H*> objects;
 };
 
 #endif /* HISTORY_H */
