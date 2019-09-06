@@ -18,11 +18,6 @@ class multival {
                                 1, std::multiplies<int64_t>());
     }
 
-    template <typename... T>
-    multival(std::string const& abscissa, T const&... args)
-        : multival(interval(abscissa, args...)) {
-    }
-
     multival(multival const& other) = default;
     multival& operator=(multival const& other) = default;
     ~multival() = default;
@@ -58,7 +53,7 @@ class multival {
         return index_for(indices_for(values)); }
 
     template <typename T>
-    T* book(int64_t, std::string const& name, std::string const& title) const;
+    T* book(int64_t, std::string const&, std::string const&) const;
 
     std::vector<int64_t> const& shape() const { return _shape; }
     int64_t dims() const { return _dims; }

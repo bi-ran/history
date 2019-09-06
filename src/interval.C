@@ -1,10 +1,13 @@
 #include "../include/interval.h"
 
-#include "TH1F.h"
-#include "TH2F.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3.h"
 
 #include <iterator>
 #include <numeric>
+
+using namespace std::literals::string_literals;
 
 interval::interval(std::string const& abscissa, int64_t number,
                    double min, double max)
@@ -28,3 +31,35 @@ int64_t interval::index_for(double value) const {
 
     return index;
 }
+
+/* template specialisations */
+template <>
+TH1F* interval::book<TH1F>(int64_t, std::string const& name,
+                           std::string const& ordinate) const {
+    auto title = ";"s + _abscissa + ";"s + ordinate;
+    return new TH1F(name.data(), title.data(), _size, _edges.data());
+}
+
+template <>
+TH2F* interval::book<TH2F>(int64_t, std::string const& name,
+                           std::string const& ordinate) const {
+    auto title = ";"s + _abscissa + ";"s + _abscissa + ";"s + ordinate;
+    return new TH2F(name.data(), title.data(), _size, _edges.data(),
+        _size, _edges.data());
+}
+
+template <>
+TH3F* interval::book<TH3F>(int64_t, std::string const& name,
+                           std::string const&) const {
+    auto title = ";"s + _abscissa + ";"s + _abscissa + ";"s + _abscissa;
+    return new TH3F(name.data(), title.data(), _size, _edges.data(),
+        _size, _edges.data(), _size, _edges.data());
+}
+
+/* explicit instantiations */
+template TH1F*
+interval::book<TH1F>(int64_t, std::string const&, std::string const&) const;
+template TH2F*
+interval::book<TH2F>(int64_t, std::string const&, std::string const&) const;
+template TH3F*
+interval::book<TH3F>(int64_t, std::string const&, std::string const&) const;

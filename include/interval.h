@@ -28,6 +28,9 @@ class interval {
 
     int64_t index_for(double value) const;
 
+    template <typename T>
+    T* book(int64_t, std::string const&, std::string const&) const;
+
     double const* edges() const {
         return _edges.data(); }
     std::array<double, 2> edges(int64_t index) const {
