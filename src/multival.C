@@ -18,7 +18,7 @@ std::vector<int64_t> multival::indices_for(int64_t index) const {
 /* template specialisations */
 
 template <>
-TH1F* multival::book<TH1F>(std::string const& name,
+TH1F* multival::book<TH1F>(int64_t, std::string const& name,
                            std::string const& ordinate) const {
     auto title = ";"s + _intervals[0].abscissa() + ";"s + ordinate;
 
@@ -27,7 +27,7 @@ TH1F* multival::book<TH1F>(std::string const& name,
 }
 
 template <>
-TH2F* multival::book<TH2F>(std::string const& name,
+TH2F* multival::book<TH2F>(int64_t, std::string const& name,
                            std::string const&) const {
     auto title = ";"s + _intervals[0].abscissa()
         + ";"s + _intervals[1].abscissa();
@@ -39,6 +39,6 @@ TH2F* multival::book<TH2F>(std::string const& name,
 
 /* explicit instantiations */
 template TH1F*
-multival::book<TH1F>(std::string const&, std::string const&) const;
+multival::book<TH1F>(int64_t, std::string const&, std::string const&) const;
 template TH2F*
-multival::book<TH2F>(std::string const&, std::string const&) const;
+multival::book<TH2F>(int64_t, std::string const&, std::string const&) const;

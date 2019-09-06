@@ -406,7 +406,7 @@ class history {
 
         objects = std::vector<H*>(_size, nullptr);
         for (int64_t i = 0; i < _size; ++i)
-            objects[i] = _factory(_tag + stub(i), _label);
+            objects[i] = _factory(i, _tag + stub(i), _label);
     }
 
     template <typename... T>
@@ -423,7 +423,7 @@ class history {
     int64_t _size;
     std::vector<int64_t> _shape;
 
-    std::function<H*(std::string const&, std::string const&)> _factory;
+    std::function<H*(int64_t, std::string const&, std::string const&)> _factory;
     std::vector<H*> objects;
 };
 

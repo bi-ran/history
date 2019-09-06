@@ -58,7 +58,7 @@ class multival {
         return index_for(indices_for(values)); }
 
     template <typename T>
-    T* book(std::string const& name, std::string const& title) const;
+    T* book(int64_t, std::string const& name, std::string const& title) const;
 
     std::vector<int64_t> const& shape() const { return _shape; }
     int64_t dims() const { return _dims; }
