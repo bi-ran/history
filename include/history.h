@@ -60,13 +60,11 @@ class history {
 
     history(TFile* f, std::string const& tag)
             : _tag(tag) {
-        using namespace std::literals::string_literals;
-
         std::string desc = ((TNamed*)f->Get(tag.data()))->GetTitle();
         while (!desc.empty()) {
             desc.erase(0, 1);
 
-            auto pos = desc.find("_"s);
+            auto pos = desc.find("_");
             auto token = desc.substr(0, pos);
             _shape.push_back(std::atoi(token.data()));
 
@@ -98,13 +96,17 @@ class history {
               _size(other._size),
               _shape(other._shape),
               _factory(other._factory) {
-        using namespace std::literals::string_literals;
-
         for (auto const& obj : other.objects) {
             auto name = prefix + "_" + obj->GetName();
             objects.emplace_back((H*)obj->Clone(name.data()));
             objects.back()->SetName(name.data());
         }
+    }
+
+    history(history const& other, std::string const& old,
+            std::string const& tag)
+            : history(other, "") {
+        rename(std::string("_") + old, tag);
     }
 
     history(history const&) = delete;
@@ -308,28 +310,32 @@ class history {
             obj->Write(name.data(), TObject::kOverwrite);
         }
 
-        auto shape_desc = ""s;
+        auto shape_desc = std::string();
         for (auto const& s : _shape)
             shape_desc += "_"s + std::to_string(s);
 
-        auto title = prefix + "_"s + _tag;
+        auto title = prefix + "_" + _tag;
         auto label = new TNamed(title.data(), shape_desc.data());
         label->Write("", TObject::kOverwrite);
     }
 
-    void rename(std::string const& replace, std::string const& prefix) {
-        auto original = _tag;
+    void rename(std::string const& old, std::string const& tag) {
+        auto change = [&](std::string& name, std::string const& old,
+                          std::string const& tag) {
+            name.replace(name.find(old), old.length(), tag); };
 
-        _tag = prefix + "_" + (replace.empty() ? _tag : replace);
         for (auto const& obj : objects) {
             std::string name = obj->GetName();
-            auto pos = name.find(original);
-            name.replace(pos, original.length(), _tag);
+            change(name, old, tag);
             obj->SetName(name.data());
         }
+
+        change(_tag, old, tag);
     }
 
-    void rename(std::string const& prefix) { rename("", prefix); }
+    void rename(std::string const& tag) {
+        rename(_tag, tag);
+    }
 
     int64_t const& dims() const { return _dims; }
     int64_t const& size() const { return _size; }
@@ -380,13 +386,11 @@ class history {
     }
 
     std::string stub(std::vector<int64_t> const& indices) const {
-        using namespace std::literals::string_literals;
-
         auto add = [](std::string base, int64_t index) {
             return std::move(base) + "_" + std::to_string(index); };
 
         return std::accumulate(std::begin(indices), std::end(indices),
-                               ""s, add);
+                               std::string(), add);
     }
 
     std::string stub(int64_t index) const {
@@ -402,8 +406,6 @@ class history {
         return ((*objects[index]).*function)(std::forward<U>(args)...); }
 
     void allocate_objects() {
-        using namespace std::literals::string_literals;
-
         objects = std::vector<H*>(_size, nullptr);
         for (int64_t i = 0; i < _size; ++i)
             objects[i] = _factory(i, _tag + stub(i), _label);
