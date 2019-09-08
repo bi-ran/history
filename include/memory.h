@@ -18,6 +18,11 @@ class memory : public history<H> {
           intervals(other.intervals) {
     }
 
+    memory(memory const& other, std::string const& old, std::string const& tag)
+        : history<H>(other, old, tag),
+          intervals(other.intervals) {
+    }
+
     memory(history<H>&& other, multival const* intervals)
         : history<H>(std::move(other)),
           intervals(intervals) {
