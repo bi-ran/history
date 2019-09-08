@@ -14,8 +14,8 @@
 #include <utility>
 #include <vector>
 
-using x = std::initializer_list<int64_t>;
-using v = std::initializer_list<double>;
+using x = std::initializer_list<int64_t> const;
+using v = std::initializer_list<double> const;
 
 template <typename H>
 class history {
