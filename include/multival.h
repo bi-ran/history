@@ -59,6 +59,8 @@ class multival {
     int64_t dims() const { return _dims; }
     int64_t size() const { return _size; }
 
+    interval const& axis(int64_t i) const { return _intervals[i]; }
+
   private:
     template <typename... T>
     void extract(T const&... args) {
