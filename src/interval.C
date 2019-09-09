@@ -56,6 +56,36 @@ TH3F* interval::book<TH3F>(int64_t, std::string const& name,
         _size, _edges.data(), _size, _edges.data());
 }
 
+template <>
+TH1F* interval::book<TH1F, 2>(int64_t, std::string const& name,
+                              std::string const& ordinate,
+                              std::array<int64_t, 2> const& offset) const {
+    auto title = ";"s + _abscissa + ";"s + ordinate;
+    return new TH1F(name.data(), title.data(), _size - offset[0] - offset[1],
+                    _edges.data() + offset[0]);
+}
+
+template <>
+TH2F* interval::book<TH2F, 4>(int64_t, std::string const& name,
+                              std::string const& ordinate,
+                              std::array<int64_t, 4> const& offset) const {
+    auto title = ";"s + _abscissa + ";"s + _abscissa + ";"s + ordinate;
+    return new TH2F(name.data(), title.data(), _size - offset[0] - offset[1],
+                    _edges.data() + offset[0], _size - offset[2] - offset[3],
+                    _edges.data() + offset[2]);
+}
+
+template <>
+TH3F* interval::book<TH3F, 6>(int64_t, std::string const& name,
+                              std::string const&,
+                              std::array<int64_t, 6> const& offset) const {
+    auto title = ";"s + _abscissa + ";"s + _abscissa + ";"s + _abscissa;
+    return new TH3F(name.data(), title.data(), _size - offset[0] - offset[1],
+                    _edges.data() + offset[0], _size - offset[2] - offset[3],
+                    _edges.data() + offset[2], _size - offset[4] - offset[5],
+                    _edges.data() + offset[4]);
+}
+
 /* explicit instantiations */
 template TH1F*
 interval::book<TH1F>(int64_t, std::string const&, std::string const&) const;
@@ -63,3 +93,12 @@ template TH2F*
 interval::book<TH2F>(int64_t, std::string const&, std::string const&) const;
 template TH3F*
 interval::book<TH3F>(int64_t, std::string const&, std::string const&) const;
+template TH1F*
+interval::book<TH1F, 2>(int64_t, std::string const&, std::string const&,
+                        std::array<int64_t, 2> const&) const;
+template TH2F*
+interval::book<TH2F, 4>(int64_t, std::string const&, std::string const&,
+                        std::array<int64_t, 4> const&) const;
+template TH3F*
+interval::book<TH3F, 6>(int64_t, std::string const&, std::string const&,
+                        std::array<int64_t, 6> const&) const;

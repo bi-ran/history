@@ -55,6 +55,10 @@ class multival {
     template <typename T>
     T* book(int64_t, std::string const&, std::string const&) const;
 
+    template <typename T, int64_t N>
+    T* book(int64_t, std::string const&, std::string const&,
+            std::array<int64_t, N> const&) const;
+
     std::vector<int64_t> const& shape() const { return _shape; }
     int64_t dims() const { return _dims; }
     int64_t size() const { return _size; }

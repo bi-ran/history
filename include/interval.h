@@ -31,6 +31,10 @@ class interval {
     template <typename T>
     T* book(int64_t, std::string const&, std::string const&) const;
 
+    template <typename T, int64_t N>
+    T* book(int64_t, std::string const&, std::string const&,
+            std::array<int64_t, N> const&) const;
+
     double const* edges() const {
         return _edges.data(); }
     std::array<double, 2> edges(int64_t index) const {
