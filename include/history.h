@@ -241,6 +241,27 @@ class history {
     history* sum(int64_t axis, T... axes) const {
         return sum(axis)->sum(axes...); }
 
+    history* extend(std::string const& prefix, int64_t axis, int64_t size) {
+        auto shape = std::vector<int64_t>(_shape);
+        shape.insert(std::next(std::begin(shape), axis), size);
+
+        auto result = new history(prefix + "_" + _tag, _label, shape);
+
+        for (int64_t i = 0; i < _size; ++i) {
+            auto indices = indices_for(i);
+            indices.insert(std::next(std::begin(indices), axis), 0);
+
+            for (int64_t j = 0; j < size; ++j) {
+                indices[axis] = j;
+                (*result)[indices] = (H*)objects[i]->Clone();
+            }
+        }
+
+        result->rename();
+
+        return result;
+    }
+
     history* shrink(std::string const& tag,
                     std::vector<int64_t> const& shape,
                     std::vector<int64_t> const& offset) const {
