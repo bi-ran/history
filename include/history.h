@@ -96,11 +96,10 @@ class history {
               _size(other._size),
               _shape(other._shape),
               _factory(other._factory) {
-        for (auto const& obj : other.objects) {
-            auto name = prefix + "_" + obj->GetName();
-            objects.emplace_back((H*)obj->Clone(name.data()));
-            objects.back()->SetName(name.data());
-        }
+        for (auto const& obj : other.objects)
+            objects.push_back((H*)obj->Clone());
+
+        rename();
     }
 
     history(history const& other, std::string const& old,
@@ -271,8 +270,7 @@ class history {
         result->_size = std::accumulate(std::begin(shape), std::end(shape), 1,
                                         std::multiplies<int64_t>());
 
-        result->apply([&](auto h, int64_t i) {
-            h->SetName((result->_tag + result->stub(i)).data()); });
+        result->rename();
 
         return result;
     }
@@ -305,8 +303,10 @@ class history {
     void save(std::string const& prefix) const {
         using namespace std::literals::string_literals;
 
+        auto full = prefix.empty() ? "" : prefix + "_";
+
         for (auto const& obj : objects) {
-            auto name = prefix + "_"s + obj->GetName();
+            auto name = full + obj->GetName();
             obj->Write(name.data(), TObject::kOverwrite);
         }
 
@@ -314,8 +314,7 @@ class history {
         for (auto const& s : _shape)
             shape_desc += "_"s + std::to_string(s);
 
-        auto title = prefix + "_" + _tag;
-        auto label = new TNamed(title.data(), shape_desc.data());
+        auto label = new TNamed((full + _tag).data(), shape_desc.data());
         label->Write("", TObject::kOverwrite);
     }
 
@@ -335,6 +334,11 @@ class history {
 
     void rename(std::string const& tag) {
         rename(_tag, tag);
+    }
+
+    void rename() {
+        for (int64_t i = 0; i < _size; ++i)
+            objects[i]->SetName((_tag + stub(i)).data());
     }
 
     int64_t const& dims() const { return _dims; }
