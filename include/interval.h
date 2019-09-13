@@ -40,6 +40,9 @@ class interval {
     std::array<double, 2> edges(int64_t index) const {
         return { _edges[index], _edges[index + 1] }; }
 
+    double width(int64_t index) const {
+        return _edges[index + 1] - _edges[index]; }
+
     double operator[](int64_t index) const {
         return _edges[index]; }
 

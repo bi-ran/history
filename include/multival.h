@@ -64,6 +64,7 @@ class multival {
     int64_t size() const { return _size; }
 
     interval const& axis(int64_t i) const { return _intervals[i]; }
+    std::vector<interval> const& axes() const { return _intervals; }
 
   private:
     template <typename... T>
