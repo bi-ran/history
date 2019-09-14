@@ -322,40 +322,23 @@ class history {
         for (int64_t i = 0; i < _size; ++i) { f(objects[i], i); } }
 
     void save(std::string const& prefix) const {
-        using namespace std::literals::string_literals;
-
         auto full = prefix.empty() ? "" : prefix + "_";
-
         for (auto const& obj : objects) {
             auto name = full + obj->GetName();
             obj->Write(name.data(), TObject::kOverwrite);
         }
 
-        auto shape_desc = std::string();
-        for (auto const& s : _shape)
-            shape_desc += "_"s + std::to_string(s);
-
-        auto label = new TNamed((full + _tag).data(), shape_desc.data());
+        auto label = new TNamed((full + _tag).data(), stub(_shape).data());
         label->Write("", TObject::kOverwrite);
     }
 
+    void save() const { save(""); }
+
     void rename(std::string const& old, std::string const& tag) {
-        auto change = [&](std::string& name, std::string const& old,
-                          std::string const& tag) {
-            name.replace(name.find(old), old.length(), tag); };
-
-        for (auto const& obj : objects) {
-            std::string name = obj->GetName();
-            change(name, old, tag);
-            obj->SetName(name.data());
-        }
-
-        change(_tag, old, tag);
-    }
+        _tag.replace(_tag.find(old), old.length(), tag); rename(); }
 
     void rename(std::string const& tag) {
-        rename(_tag, tag);
-    }
+        _tag = tag; rename(); }
 
     void rename() {
         for (int64_t i = 0; i < _size; ++i)
@@ -411,16 +394,13 @@ class history {
     }
 
     std::string stub(std::vector<int64_t> const& indices) const {
-        auto add = [](std::string base, int64_t index) {
-            return std::move(base) + "_" + std::to_string(index); };
-
         return std::accumulate(std::begin(indices), std::end(indices),
-                               std::string(), add);
+            std::string(), [](std::string base, int64_t index) {
+                return std::move(base) + "_" + std::to_string(index); });
     }
 
     std::string stub(int64_t index) const {
-        return stub(indices_for(index));
-    }
+        return stub(indices_for(index)); }
 
     template <typename T, typename... U>
     T forward(int64_t index, T (H::* function)(U...), U... args) {
