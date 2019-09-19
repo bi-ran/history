@@ -345,6 +345,12 @@ class history {
             objects[i]->SetName((_tag + stub(i)).data());
     }
 
+    template <typename... T>
+    void saveas(T const&... args) { rename(args...); save(); }
+
+    template <typename... T>
+    void saveby(T const&... args) { rename(); save(args...); }
+
     int64_t const& dims() const { return _dims; }
     int64_t const& size() const { return _size; }
     std::vector<int64_t> const& shape() const { return _shape; }
