@@ -33,7 +33,10 @@ class history {
 
     template <template <typename...> class T>
     history(std::string const& tag, std::string const& label,
-            auto factory, T<int64_t> const& shape)
+            std::function<H*(int64_t,
+                             std::string const&,
+                             std::string const&)> factory,
+            T<int64_t> const& shape)
             : _tag(tag),
               _label(label),
               _dims(shape.size()),
@@ -46,7 +49,10 @@ class history {
 
     template <typename... T>
     history(std::string const& tag, std::string const& label,
-            auto factory, T const&... dimensions)
+            std::function<H*(int64_t,
+                             std::string const&,
+                             std::string const&)> factory,
+            T const&... dimensions)
             : _tag(tag),
               _label(label),
               _dims(sizeof...(T)),
