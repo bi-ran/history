@@ -8,7 +8,10 @@ template <typename H>
 class memory : public history<H> {
   public:
     memory(std::string const& tag, std::string const& label,
-           auto factory, multival const* intervals)
+           std::function<H*(int64_t,
+                            std::string const&,
+                            std::string const&)> factory,
+           multival const* intervals)
         : history<H>(tag, label, factory, intervals->shape()),
           intervals(intervals) {
     }
