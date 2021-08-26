@@ -231,6 +231,8 @@ class history {
         std::vector<int64_t> output = _shape;
         output.erase(std::next(std::begin(output), axis));
 
+        if (output.empty()) { output.push_back(1); }
+
         auto result = new history(_tag + "_sum" + std::to_string(axis),
                                   _label, output);
 
